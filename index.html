@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>創藝小玩家・隨選隨做工作坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mint:#1FC9AE; --mint-deep:#0EA491; --mint-pale:#E3FBF3;
+  --cream:#FFFBF3; --card:#FFFFFF;
+  --pink:#FF6FA1; --pink-deep:#E8477F;
+  --blue:#4A5FDB; --blue-deep:#3746B0;
+  --orange:#FCA53D; --orange-deep:#E5851A;
+  --gold:#FFC93C;
+  --ink:#3A342B; --ink-soft:#93897A; --line:#EFE6D8;
+  --ok:#1E9E75; --warn:#E0553F;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#EAF6F2}
+body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);color:var(--ink);
+  max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:118px;position:relative;
+  box-shadow:0 0 40px rgba(15,120,100,.10)}
+.kuai{font-family:'ZCOOL KuaiLe','Noto Sans TC',sans-serif}
+
+/* ── 頁首：薄荷綠打洞牆風格 ── */
+.hero{
+  background:
+    radial-gradient(circle,rgba(255,255,255,.16) 1.6px,transparent 1.6px) 0 0/22px 22px,
+    linear-gradient(160deg,var(--mint) 0%,var(--mint-deep) 100%);
+  color:#fff;padding:22px 20px 26px;position:relative;
+  border-radius:0 0 32px 32px;overflow:hidden;
+}
+.hero .brand{display:flex;align-items:center;gap:8px;font-size:12.5px;opacity:.92;font-weight:700}
+.hero .brand .paw{font-size:15px}
+.hero h1{font-family:'ZCOOL KuaiLe',sans-serif;font-size:27px;line-height:1.3;margin:10px 0 6px;
+  text-shadow:0 2px 0 rgba(0,0,0,.12);letter-spacing:1px}
+.hero .sub{font-size:12.5px;opacity:.95;line-height:1.8;background:rgba(255,255,255,.16);
+  border-radius:12px;padding:9px 12px;margin-top:4px}
+.tagrow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.tag{font-family:'ZCOOL KuaiLe',sans-serif;font-size:14px;color:#fff;padding:8px 14px;border-radius:99px;
+  box-shadow:0 3px 0 rgba(0,0,0,.14);letter-spacing:.5px}
+.tag.t-clay{background:var(--orange)}
+.tag.t-cream{background:var(--pink)}
+.tag.t-perler{background:var(--blue)}
+.mascot{position:absolute;right:14px;top:14px;font-size:34px;filter:drop-shadow(0 3px 2px rgba(0,0,0,.15))}
+
+.steps{display:flex;gap:7px;margin-top:16px}
+.steps i{flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.32);font-style:normal}
+.steps i.on{background:var(--gold)}
+.stepname{font-size:12.5px;opacity:.92;margin-top:9px;font-weight:700}
+
+/* ── 內容區 ── */
+.wrap{padding:18px 16px 8px}
+.notice{background:#FFF3D6;border:1.5px solid #F6DD9C;border-radius:16px;padding:13px 15px;margin-bottom:16px;font-size:12.5px;color:#8A6400;line-height:1.75}
+.notice b{color:#6B4E00}
+
+/* ── 步驟1：日期與時段 ── */
+.weekhead{font-family:'ZCOOL KuaiLe',sans-serif;font-size:14px;color:var(--mint-deep);margin:16px 0 9px 2px}
+.weekhead:first-child{margin-top:0}
+.daterow{display:flex;gap:9px;flex-wrap:wrap}
+.datechip{flex:0 0 auto;padding:11px 14px;border:2px solid var(--line);border-radius:16px;background:#fff;
+  font-family:inherit;font-size:14px;color:var(--ink);text-align:center;min-width:64px;transition:.12s}
+.datechip .d{display:block;font-family:'ZCOOL KuaiLe',sans-serif;font-size:19px;color:var(--mint-deep)}
+.datechip .w{display:block;font-size:11px;color:var(--ink-soft);margin-top:2px}
+.datechip.on{border-color:var(--mint-deep);background:var(--mint-pale)}
+.datechip.on .d{color:var(--mint-deep)}
+.datechip.off{opacity:.4}
+
+.slots{margin-top:20px;background:#fff;border:2px solid var(--line);border-radius:20px;padding:16px}
+.slots h3{font-family:'ZCOOL KuaiLe',sans-serif;font-size:15.5px;color:var(--mint-deep);margin-bottom:12px}
+.slotrow{display:flex;flex-direction:column;gap:10px}
+.slot{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border:2px solid var(--line);
+  border-radius:16px;background:#fff;font-family:inherit;font-size:15px;transition:.12s}
+.slot .left{font-weight:700;color:var(--mint-deep)}
+.slot .cap{font-size:12.5px;color:var(--ok);font-weight:500}
+.slot .cap.low{color:var(--warn)}
+.slot.on{border-color:var(--mint-deep);background:var(--mint-pale)}
+.slot:disabled{opacity:.42}
+
+/* ── 步驟2：人數（大人／兒童） ── */
+.pbox{background:#fff;border:2px solid var(--line);border-radius:20px;padding:6px 16px}
+.prow2{display:flex;align-items:center;justify-content:space-between;padding:15px 0}
+.prow2+.prow2{border-top:1.5px dashed var(--line)}
+.plabel b{display:block;font-family:'ZCOOL KuaiLe',sans-serif;font-size:16.5px;color:var(--ink)}
+.plabel small{display:block;font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+.pstep{display:flex;align-items:center;gap:14px}
+.pbtn{width:36px;height:36px;border-radius:50%;border:2px solid var(--mint-deep);background:#fff;
+  color:var(--mint-deep);font-size:19px;font-weight:700;font-family:inherit;line-height:1;
+  display:flex;align-items:center;justify-content:center}
+.pbtn:disabled{border-color:#E0DACE;color:#CFC8BA}
+.pnum{min-width:24px;text-align:center;font-family:'ZCOOL KuaiLe',sans-serif;font-size:19px;color:var(--ink)}
+.totalbar{margin-top:16px;text-align:center;font-size:13.5px;color:var(--ink-soft);
+  background:var(--mint-pale);border-radius:14px;padding:12px}
+.totalbar b{color:var(--mint-deep);font-family:'ZCOOL KuaiLe',sans-serif;font-size:16px}
+
+/* ── 步驟3：品項與人數 ── */
+.icard{background:#fff;border:2px solid var(--line);border-radius:20px;padding:15px;margin-bottom:13px;
+  border-left-width:7px}
+.icard.c-clay{border-left-color:var(--orange)}
+.icard.c-cream{border-left-color:var(--pink)}
+.icard.c-perler{border-left-color:var(--blue)}
+.icard.sel{background:linear-gradient(180deg,#fff,#FBFAF6)}
+.ihead{display:flex;align-items:center;gap:12px}
+.iic{flex:0 0 48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.c-clay .iic{background:#FFF1DE}
+.c-cream .iic{background:#FFE7EF}
+.c-perler .iic{background:#E9EBFB}
+.ibody{flex:1;min-width:0}
+.ibody h3{font-family:'ZCOOL KuaiLe',sans-serif;font-size:17px;color:var(--ink)}
+.ibody .cap{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+.ibody .cap b{color:var(--ok);font-weight:700}
+.ibody .cap b.low{color:var(--warn)}
+.agenote{font-size:11.5px;color:#8A6400;background:#FFF3D6;border-radius:10px;padding:9px 11px;margin-top:12px;line-height:1.65}
+.starnote{font-size:11.5px;color:#B7791F;background:#FBF3E4;border-radius:10px;padding:9px 11px;margin-top:8px;line-height:1.65}
+.istepper{display:flex;align-items:center;gap:12px;margin-top:13px;padding-top:13px;border-top:1.5px dashed var(--line)}
+.stepper{display:flex;border:2px solid var(--ink);border-radius:12px;overflow:hidden}
+.c-clay .stepper{border-color:var(--orange-deep)}
+.c-cream .stepper{border-color:var(--pink-deep)}
+.c-perler .stepper{border-color:var(--blue-deep)}
+.stepper button{width:38px;height:36px;border:none;background:#fff;font-size:19px;color:var(--ink);font-weight:700;font-family:inherit}
+.stepper button:disabled{opacity:.35}
+.stepper b{width:40px;text-align:center;font-family:'ZCOOL KuaiLe',sans-serif;font-size:17px;background:#fff;line-height:36px}
+.istepper span{font-size:13px;color:var(--ink-soft)}
+.ifull{font-size:12.5px;color:var(--warn);margin-top:13px;padding-top:13px;border-top:1.5px dashed var(--line);font-weight:700}
+
+/* ── 步驟4：聯絡資料 ── */
+.recap{background:var(--mint-pale);border:2px solid #C9EEE3;border-radius:18px;padding:15px;font-size:14px;line-height:1.85;margin-bottom:16px}
+.recap b{color:var(--mint-deep)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;font-weight:700}
+.field input,.field textarea{width:100%;padding:13px 14px;border:2px solid var(--line);border-radius:14px;
+  font-size:15px;font-family:inherit;background:#fff}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--mint-deep)}
+
+/* ── 完成畫面 ── */
+.done{padding:52px 26px;text-align:center}
+.done .big{font-size:50px}
+.done h2{font-family:'ZCOOL KuaiLe',sans-serif;font-size:22px;color:var(--mint-deep);margin:12px 0 8px}
+.done p{font-size:14px;color:var(--ink-soft);line-height:1.85}
+.done .items{margin-top:12px;font-size:13.5px;color:var(--ink);text-align:left;background:var(--mint-pale);
+  border-radius:16px;padding:14px 16px;line-height:2}
+
+.state{padding:48px 24px;text-align:center;color:var(--ink-soft);font-size:14px;line-height:1.7}
+
+/* ── 底部列 ── */
+.bar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:0;z-index:30;
+  background:#fff;border-top:2px solid var(--line);padding:13px 16px calc(13px + env(safe-area-inset-bottom));
+  border-radius:20px 20px 0 0;box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+.bar .sum{display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink-soft);margin-bottom:10px}
+.bar .sum b{color:var(--mint-deep);font-size:15px}
+.bar .sum .clear{color:var(--ink-soft);text-decoration:underline;background:none;border:none;font-size:13px;font-family:inherit}
+.btnrow{display:flex;gap:10px}
+.back{flex:0 0 52px;border:2px solid var(--mint-deep);background:#fff;color:var(--mint-deep);border-radius:14px;font-size:18px}
+.next{flex:1;padding:15px;border:none;border-radius:14px;background:var(--mint-deep);color:#fff;
+  font-size:16.5px;font-weight:700;letter-spacing:2px;font-family:inherit;box-shadow:0 4px 0 #0B7E70}
+.next:disabled{background:#C7CBC4;box-shadow:none}
+</style>
+</head>
+<body>
+<div class="hero">
+  <span class="mascot">🐻</span>
+  <div class="brand"><span class="paw">🐾</span>Otto2 台中旗艦店</div>
+  <h1>創藝小玩家<br>隨選隨做工作坊</h1>
+  <div class="sub">活動日期｜8/17–8/21、8/24–8/28（週一至週五）<br>開放時段｜每日下午 2:00–6:00，每小時一個時段</div>
+  <div class="tagrow">
+    <span class="tag t-clay">黏土創作</span>
+    <span class="tag t-cream">奶油膠DIY</span>
+    <span class="tag t-perler">迷你拼豆</span>
+  </div>
+  <div class="steps"><i id="st1"></i><i id="st2"></i><i id="st3"></i><i id="st4"></i></div>
+  <div class="stepname" id="stepname"></div>
+</div>
+
+<div id="view"></div>
+
+<div class="bar" id="bar">
+  <div class="sum">
+    <span>已選 <b id="sumItems">0</b> 項・<b id="sumPeople">0</b> 位</span>
+    <button class="clear" id="btnClear">清空</button>
+  </div>
+  <div class="btnrow">
+    <button class="back" id="btnBack" style="display:none">←</button>
+    <button class="next" id="btnNext">下一步 →</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 設定區（活動結束或改期時改這裡就好） ══════════════════ */
+
+/* 留空＝demo 模式，資料存在瀏覽器 localStorage，方便先測試。
+   要接回 otto2-2026 的 Firebase，把 Realtime Database 的網址貼進來即可，
+   寫入路徑固定是 /popupBookings.json，跟主系統 bookings.json 分開存，互不影響。
+   例如："https://otto2-2026-default-rtdb.asia-southeast1.firebasedatabase.app" */
+const FIREBASE_URL = "";
+
+/* 活動日期：8/17–8/21、8/24–8/28（自動列出，改年份/月份不用重寫日期） */
+function buildDates(ranges){
+  const out=[];
+  ranges.forEach(([y,m,from,to])=>{
+    for(let d=from;d<=to;d++) out.push(`${y}/${String(m).padStart(2,"0")}/${String(d).padStart(2,"0")}`);
+  });
+  return out;
+}
+const EVENT_DATES = buildDates([[2026,8,17,21],[2026,8,24,28]]);
+
+/* 每日開放時段：下午 2:00–6:00，每小時一區間 */
+const SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
+
+/* 三個品項各自獨立算名額，互不排擠。
+   colorCls 對應卡片左側色條與頁首標籤顏色，跟現場招牌配色一致。
+   tiers 是星等對照表的框架，先留空（null），
+   之後有清單了，把每個 stars 數字填進去，畫面會自動從「★ 待補」變成實際星數。 */
+const ITEMS = [
+  { id:"clay",   name:"黏土",   icon:"🧸", cap:4, colorCls:"c-clay",
+    ageNote:"4 歲以上可獨立製作；未滿 4 歲需大人陪同",
+    tiers:[ {name:"入門款式", stars:null}, {name:"進階款式", stars:null}, {name:"精緻款式", stars:null} ] },
+  { id:"cream",  name:"奶油膠", icon:"🍦", cap:8, colorCls:"c-cream",
+    ageNote:"4 歲以上可獨立製作；未滿 4 歲需大人陪同",
+    tiers:[ {name:"入門款式", stars:null}, {name:"進階款式", stars:null}, {name:"精緻款式", stars:null} ] },
+  { id:"perler", name:"拼豆",   icon:"🔵", cap:8, colorCls:"c-perler",
+    ageNote:"國小一年級以上可獨立製作；未滿小一需大人陪同",
+    tiers:[ {name:"入門款式", stars:null}, {name:"進階款式", stars:null}, {name:"精緻款式", stars:null} ] }
+];
+
+/* ══════════════════ 狀態 ══════════════════ */
+let step=1;                 // 1=日期時段 2=人數 3=品項 4=聯絡資料
+let selDate="", selSlot="";
+let adults=0, kids=0;        // 登記時分開記，方便老師看表單
+let picks={};                // itemId -> 數量
+let customer={name:"",phone:"",note:""};
+let bookedMap={};            // "date|slot|itemId" -> 已預約人數
+
+/* ══════════════════ 小工具 ══════════════════ */
+const pad=n=>String(n).padStart(2,"0");
+const dstr=(y,m,d)=>`${y}/${pad(m)}/${pad(d)}`;
+const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function weekdayOf(dateStr){
+  const [y,m,d]=dateStr.split("/").map(Number);
+  return ["日","一","二","三","四","五","六"][new Date(y,m-1,d).getDay()];
+}
+function slotPassed(date,slot){
+  const now=new Date();
+  const today=dstr(now.getFullYear(),now.getMonth()+1,now.getDate());
+  if(date<today)return true;
+  if(date>today)return false;
+  const m=slot.match(/^(\d{1,2}):(\d{2})/);
+  if(!m)return false;
+  return now.getHours()*60+now.getMinutes() >= (+m[1])*60+(+m[2]);
+}
+function itemOf(id){ return ITEMS.find(i=>i.id===id); }
+function totalPeople(){ return Object.values(picks).reduce((s,n)=>s+n,0); }
+function partyNeed(){ return adults+kids; }
+
+/* ══════════════════ 資料存取（demo：localStorage／正式：Firebase） ══════════════════ */
+const LS_KEY="otto2_popup_bookings_v1";
+function demoLoad(){ try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]")}catch(e){return []} }
+function demoSave(list){ try{localStorage.setItem(LS_KEY,JSON.stringify(list))}catch(e){} }
+
+async function loadBookings(){
+  bookedMap={};
+  let list=[];
+  if(FIREBASE_URL){
+    try{
+      const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings.json");
+      const j=await res.json();
+      list=j?Object.values(j):[];
+    }catch(e){ list=[]; }
+  }else{
+    list=demoLoad();
+  }
+  list.forEach(b=>{
+    if(!b||b.status==="cancelled"||!b.date||!b.slot||!Array.isArray(b.items))return;
+    b.items.forEach(it=>{
+      if(!it||!it.itemId)return;
+      const k=b.date+"|"+b.slot+"|"+it.itemId;
+      bookedMap[k]=(bookedMap[k]||0)+(+it.qty||0);
+    });
+  });
+}
+function leftOf(date,slot,itemId){
+  const it=itemOf(itemId);
+  if(!it)return 0;
+  const used=bookedMap[date+"|"+slot+"|"+itemId]||0;
+  return Math.max(0,it.cap-used);
+}
+/* 這個時段是否還有任何品項剩名額（給日曆時段列表判斷要不要整格關掉） */
+function slotHasRoom(date,slot){
+  return ITEMS.some(it=>leftOf(date,slot,it.id)>0);
+}
+
+/* ══════════════════ 畫面骨架 ══════════════════ */
+function syncChrome(){
+  for(let i=1;i<=4;i++)document.getElementById("st"+i).className=(i<=step)?"on":"";
+  document.getElementById("stepname").textContent=
+    ["","步驟 1／4：選擇日期與時段","步驟 2／4：登記人數","步驟 3／4：選擇品項","步驟 4／4：確認與聯絡資料"][step];
+  document.getElementById("btnBack").style.display=(step>1)?"block":"none";
+}
+function setStep(n){ step=n; syncChrome(); render(); }
+function render(){
+  syncChrome();
+  if(step===1)renderDateSlot();
+  if(step===2)renderParty();
+  if(step===3)renderItems();
+  if(step===4)renderContact();
+  updateBar();
+}
+function updateBar(){
+  document.getElementById("sumItems").textContent=Object.keys(picks).filter(id=>picks[id]>0).length;
+  document.getElementById("sumPeople").textContent=totalPeople();
+  const btn=document.getElementById("btnNext");
+  if(step===1){
+    btn.textContent="登記人數 →";
+    btn.disabled=!(selDate&&selSlot);
+  }
+  if(step===2){
+    const need=partyNeed();
+    btn.textContent=need===0?"請至少選擇 1 位":"選擇品項 →";
+    btn.disabled=need===0;
+  }
+  if(step===3){
+    const n=totalPeople(),need=partyNeed();
+    if(!n){btn.textContent=`請為 ${need} 位選擇品項`;btn.disabled=true}
+    else if(n<need){btn.textContent=`還差 ${need-n} 位的品項`;btn.disabled=true}
+    else if(n>need){btn.textContent="品項份數超過人數";btn.disabled=true}
+    else{btn.textContent="填寫聯絡資料 →";btn.disabled=false}
+  }
+  if(step===4){
+    btn.textContent="送出預約";
+    btn.disabled=!(customer.name.trim()&&customer.phone.trim());
+  }
+}
+
+/* ══════════════════ 步驟 1：日期與時段 ══════════════════ */
+function renderDateSlot(){
+  const w1=EVENT_DATES.slice(0,5), w2=EVENT_DATES.slice(5,10);
+  const chip=d=>{
+    const passedAll=SLOTS.every(s=>slotPassed(d,s));
+    const off=passedAll;
+    return `<button class="datechip ${d===selDate?'on':''} ${off?'off':''}" data-d="${d}" ${off?'disabled':''}>
+      <span class="d">${+d.split("/")[2]}</span><span class="w">週${weekdayOf(d)}</span></button>`;
+  };
+  let slotHtml="";
+  if(selDate){
+    slotHtml=`<div class="slots"><h3>${selDate}（週${weekdayOf(selDate)}）可預約時段</h3><div class="slotrow">
+      ${SLOTS.map(s=>{
+        const passed=slotPassed(selDate,s);
+        const room=slotHasRoom(selDate,s);
+        const dis=passed||!room;
+        const minLeft=Math.min(...ITEMS.map(it=>leftOf(selDate,s,it.id)));
+        let capText;
+        if(passed)capText="已過時間";
+        else if(!room)capText="三品項皆已額滿";
+        else capText=`各品項尚有名額`;
+        return `<button class="slot ${s===selSlot?'on':''}" data-s="${s}" ${dis?'disabled':''}>
+          <span class="left">${s}</span>
+          <span class="cap ${!passed&&room&&minLeft<=2?'low':''}">${capText}</span></button>`;
+      }).join("")}
+    </div></div>`;
+  }
+  document.getElementById("view").innerHTML=`<div class="wrap">
+    <div class="notice"><b>💰 費用說明</b>　無需線上付款，作品費用由現場依難易度／款式以星星折抵。</div>
+    <div class="weekhead">🗓️ 第一週　8/17（一）－8/21（五）</div>
+    <div class="daterow">${w1.map(chip).join("")}</div>
+    <div class="weekhead">🗓️ 第二週　8/24（一）－8/28（五）</div>
+    <div class="daterow">${w2.map(chip).join("")}</div>
+    ${slotHtml}
+  </div>`;
+  document.querySelectorAll(".datechip:not(.off)").forEach(b=>b.onclick=async()=>{
+    selDate=b.dataset.d; selSlot=""; picks={};
+    await loadBookings(); render();
+  });
+  document.querySelectorAll(".slot:not(:disabled)").forEach(b=>b.onclick=()=>{
+    selSlot=b.dataset.s; picks={}; render();
+  });
+}
+
+/* ══════════════════ 步驟 2：人數（大人／兒童） ══════════════════ */
+function renderParty(){
+  const total=adults+kids;
+  document.getElementById("view").innerHTML=`<div class="wrap">
+    <div class="notice"><b>${selDate}（週${weekdayOf(selDate)}）　${selSlot}</b><br>大人和兒童分開登記，方便老師安排陪同與座位。</div>
+    <div class="pbox">
+      <div class="prow2">
+        <span class="plabel"><b>👨‍👩‍👧 大人</b><small>16 歲以上</small></span>
+        <span class="pstep">
+          <button class="pbtn" data-p="a-" ${adults<=0?'disabled':''}>−</button>
+          <span class="pnum">${adults}</span>
+          <button class="pbtn" data-p="a+" ${total>=12?'disabled':''}>＋</button>
+        </span>
+      </div>
+      <div class="prow2">
+        <span class="plabel"><b>🧒 兒童</b><small>依品項各有年齡建議，詳見下一步</small></span>
+        <span class="pstep">
+          <button class="pbtn" data-p="k-" ${kids<=0?'disabled':''}>−</button>
+          <span class="pnum">${kids}</span>
+          <button class="pbtn" data-p="k+" ${total>=12?'disabled':''}>＋</button>
+        </span>
+      </div>
+    </div>
+    <div class="totalbar">本次共 <b>${total} 位</b>（大人 ${adults}・兒童 ${kids}），下一步為每位選擇想做的品項</div>
+  </div>`;
+  document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.p, total=adults+kids;
+    if(k==="a+"&&total<12)adults++;
+    if(k==="a-"&&adults>0)adults--;
+    if(k==="k+"&&total<12)kids++;
+    if(k==="k-"&&kids>0)kids--;
+    picks={}; render();
+  });
+}
+
+/* ══════════════════ 步驟 3：品項與人數分配 ══════════════════ */
+function renderItems(){
+  const html=ITEMS.map(it=>{
+    const left=leftOf(selDate,selSlot,it.id);
+    const qty=picks[it.id]||0;
+    const full=left<=0;
+    const cap=Math.min(left,partyNeed()-totalPeople()+qty);
+    const starLine=it.tiers.map(t=>`${t.name}：${t.stars==null?'★ 待補':'★ '+t.stars}`).join('　·　');
+    return `<div class="icard ${it.colorCls} ${qty>0?'sel':''}" data-id="${it.id}">
+      <div class="ihead">
+        <div class="iic">${it.icon}</div>
+        <div class="ibody">
+          <h3>${it.name}</h3>
+          <div class="cap">本時段上限 ${it.cap} 位・${full?'<b class="low">已額滿</b>':'尚剩 <b>'+left+'</b> 位'}</div>
+        </div>
+      </div>
+      <div class="agenote">${it.ageNote}</div>
+      <div class="starnote">星數（範例框架，待填）：${starLine}</div>
+      ${full?`<div class="ifull">這個時段的${it.name}名額已滿，可以換其他時段或品項。</div>`
+        :`<div class="istepper">
+            <span>人數</span>
+            <div class="stepper">
+              <button data-act="minus" data-id="${it.id}" ${qty<=0?'disabled':''}>−</button>
+              <b>${qty}</b>
+              <button data-act="plus" data-id="${it.id}" ${qty>=cap?'disabled':''}>＋</button>
+            </div>
+          </div>`}
+    </div>`;
+  }).join("");
+  document.getElementById("view").innerHTML=`<div class="wrap">
+    <div class="notice"><b>${selDate}（週${weekdayOf(selDate)}）　${selSlot}</b><br>本次共 <b>${partyNeed()} 位</b>（大人 ${adults}・兒童 ${kids}），請為每位選擇想做的品項，可以做不同品項。</div>
+    ${html}
+  </div>`;
+  document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.id, left=leftOf(selDate,selSlot,id);
+    const cur=picks[id]||0;
+    const cap=Math.min(left,partyNeed()-totalPeople()+cur);
+    if(b.dataset.act==="plus"&&cur<cap)picks[id]=cur+1;
+    if(b.dataset.act==="minus"&&cur>0){ picks[id]=cur-1; if(picks[id]===0)delete picks[id]; }
+    render();
+  });
+}
+
+/* ══════════════════ 步驟 4：聯絡資料 ══════════════════ */
+function pickSummaryLine(){
+  return Object.keys(picks).filter(id=>picks[id]>0)
+    .map(id=>`${itemOf(id).name} × ${picks[id]} 位`).join("、");
+}
+function renderContact(){
+  document.getElementById("view").innerHTML=`<div class="wrap">
+    <div class="recap"><b>${selDate}（週${weekdayOf(selDate)}）　${selSlot}</b><br>
+      大人 ${adults} 位・兒童 ${kids} 位<br>
+      ${pickSummaryLine()}</div>
+    <div class="field"><label>聯絡人姓名 *</label><input id="fName" value="${esc(customer.name)}" placeholder="請填寫聯絡人姓名"></div>
+    <div class="field"><label>手機 *</label><input id="fPhone" value="${esc(customer.phone)}" inputmode="tel" placeholder="09xx-xxx-xxx"></div>
+    <div class="field"><label>備註</label><textarea id="fNote" rows="3" placeholder="想做的品項、特殊需求等">${esc(customer.note)}</textarea></div>
+  </div>`;
+  ["fName","fPhone","fNote"].forEach(id=>{
+    document.getElementById(id).oninput=()=>{
+      customer={
+        name:document.getElementById("fName").value,
+        phone:document.getElementById("fPhone").value,
+        note:document.getElementById("fNote").value
+      };
+      updateBar();
+    };
+  });
+}
+
+/* ══════════════════ 送出 ══════════════════ */
+async function submitBooking(){
+  await loadBookings();
+  for(const id in picks){
+    if(picks[id]>0&&leftOf(selDate,selSlot,id)<picks[id]){
+      alert(itemOf(id).name+" 名額剛被約走，請重新選擇。");
+      setStep(3); return;
+    }
+  }
+  const rec={
+    date:selDate, slot:selSlot,
+    adults, kids, party:{adults,kids,label:`大人 ${adults} 位・兒童 ${kids} 位`},
+    items:Object.keys(picks).filter(id=>picks[id]>0).map(id=>({itemId:id,name:itemOf(id).name,qty:picks[id]})),
+    people:totalPeople(),
+    customer:{...customer},
+    source:"popup-web", status:"new", ts:new Date().toISOString()
+  };
+  let id="POP-"+Math.random().toString(36).slice(2,7).toUpperCase();
+  if(FIREBASE_URL){
+    try{
+      const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings.json",{
+        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(rec)});
+      const j=await res.json();
+      if(j&&j.name)id=j.name.slice(-6).toUpperCase();
+    }catch(e){
+      const list=demoLoad(); rec.id=id; list.push(rec); demoSave(list);
+    }
+  }else{
+    const list=demoLoad(); rec.id=id; list.push(rec); demoSave(list);
+  }
+  renderDone(id,rec);
+}
+function renderDone(id,rec){
+  document.getElementById("bar").style.display="none";
+  document.getElementById("view").innerHTML=`<div class="done">
+    <div class="big">🐻✨</div><h2>預約完成！</h2>
+    <p><b>${rec.date}（週${weekdayOf(rec.date)}）　${rec.slot}</b><br>編號：${id}</p>
+    <div class="items">大人 ${rec.adults} 位・兒童 ${rec.kids} 位<br>
+      ${rec.items.map(it=>`${it.name} × ${it.qty} 位`).join("<br>")}</div>
+    <p style="margin-top:14px">請提前 5-10 分鐘到櫃檯報到，作品費用現場依難易度／款式以星星折抵。</p>
+  </div>`;
+}
+
+/* ══════════════════ 啟動 ══════════════════ */
+document.getElementById("btnClear").onclick=()=>{ selDate=""; selSlot=""; adults=0; kids=0; picks={}; setStep(1); };
+document.getElementById("btnBack").onclick=()=>setStep(step-1);
+document.getElementById("btnNext").onclick=async()=>{
+  if(step===1)setStep(2);
+  else if(step===2)setStep(3);
+  else if(step===3)setStep(4);
+  else if(step===4){ document.getElementById("btnNext").disabled=true; await submitBooking(); }
+};
+(async function boot(){
+  await loadBookings();
+  render();
+})();
+</script>
+</body>
+</html>
