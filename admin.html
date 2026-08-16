@@ -244,7 +244,7 @@ function sumCards(list){
 }
 function bookingRow(b){
   const cancelled=b.status==="cancelled";
-  const itemsLine=(b.items||[]).map(it=>`${it.name} × ${it.qty}`).join("、");
+  const itemsLine=(b.items||[]).map(it=>`${esc(it.person||'')}　${it.name}`).join("　｜　");
   const partyLine=`大人 ${b.adults||0} 位・兒童 ${b.kids||0} 位`;
   const phone=(b.customer&&b.customer.phone)||"";
   const name=(b.customer&&b.customer.name)||"（未填姓名）";
@@ -259,7 +259,7 @@ function bookingRow(b){
       </div>
       ${cancelled?'<span class="badge-cancel">已取消</span>':''}
     </div>
-    <div class="bkitems">${esc(itemsLine)||"（無品項資料）"}</div>
+    <div class="bkitems">${itemsLine||"（無品項資料）"}</div>
     ${note?`<div class="bknote">備註：${esc(note)}</div>`:''}
     <div class="bkfoot">
       <span class="bkts">${ts}${b.key?'　編號 '+b.key.slice(-6).toUpperCase():''}</span>
