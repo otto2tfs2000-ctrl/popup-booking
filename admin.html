@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>櫃檯後台・創藝小玩家預約總覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mint:#1FC9AE; --mint-deep:#0EA491; --mint-pale:#E3FBF3;
+  --cream:#FAF9F4; --card:#FFFFFF;
+  --pink:#FF6FA1; --blue:#4A5FDB; --orange:#FCA53D;
+  --ink:#33302B; --ink-soft:#8A8272; --line:#E7E0D2;
+  --ok:#1E9E75; --warn:#E0553F; --gold:#C88A00;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);color:var(--ink);padding-bottom:40px}
+.kuai{font-family:'ZCOOL KuaiLe',sans-serif}
+
+.hero{background:linear-gradient(135deg,var(--mint),var(--mint-deep));color:#fff;padding:18px 20px 20px;
+  position:sticky;top:0;z-index:20;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.hero .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hero h1{font-family:'ZCOOL KuaiLe',sans-serif;font-size:19px}
+.hero .meta{font-size:12px;opacity:.9;margin-top:2px}
+.refreshBtn{background:rgba(255,255,255,.22);border:none;color:#fff;padding:8px 14px;border-radius:10px;
+  font-size:13px;font-family:inherit;font-weight:700;white-space:nowrap}
+.refreshBtn:active{background:rgba(255,255,255,.34)}
+
+.datetabs{display:flex;gap:7px;overflow-x:auto;margin-top:14px;padding-bottom:2px;scrollbar-width:none}
+.datetabs::-webkit-scrollbar{display:none}
+.dtab{flex:0 0 auto;padding:8px 12px;border-radius:11px;border:1.5px solid rgba(255,255,255,.4);
+  background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:13px;text-align:center}
+.dtab b{display:block;font-family:'ZCOOL KuaiLe',sans-serif;font-size:15px}
+.dtab.on{background:#fff;color:var(--mint-deep);border-color:#fff}
+.dtab.on b{color:var(--mint-deep)}
+
+.searchrow{display:flex;gap:8px;margin-top:12px}
+.searchrow input{flex:1;padding:9px 12px;border-radius:10px;border:none;font-size:13.5px;font-family:inherit}
+.togBtn{padding:9px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.1);
+  color:#fff;font-size:12.5px;font-family:inherit;white-space:nowrap}
+.togBtn.on{background:#fff;color:var(--mint-deep)}
+
+.wrap{padding:16px 16px 8px;max-width:720px;margin:0 auto}
+
+.sumrow{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.sumcard{flex:1;min-width:130px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px}
+.sumcard .n{font-family:'ZCOOL KuaiLe',sans-serif;font-size:22px;color:var(--mint-deep)}
+.sumcard .lb{font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+
+.slotsec{margin-bottom:20px}
+.slotsec h2{font-family:'ZCOOL KuaiLe',sans-serif;font-size:15.5px;color:var(--ink);margin-bottom:9px;
+  display:flex;align-items:center;gap:8px}
+.slotsec h2 .cnt{font-size:11.5px;color:var(--ink-soft);font-family:'Noto Sans TC',sans-serif;font-weight:400}
+
+.capbars{display:flex;gap:8px;margin-bottom:10px}
+.capbar{flex:1;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:9px 11px;border-left-width:5px}
+.capbar.c-clay{border-left-color:var(--orange)}
+.capbar.c-cream{border-left-color:var(--pink)}
+.capbar.c-perler{border-left-color:var(--blue)}
+.capbar .nm{font-size:12px;color:var(--ink-soft)}
+.capbar .val{font-family:'ZCOOL KuaiLe',sans-serif;font-size:16px;margin-top:1px}
+.capbar .val.full{color:var(--warn)}
+.capbar .val.ok{color:var(--ok)}
+.capbar .bar{height:5px;border-radius:99px;background:#EFE9DC;margin-top:6px;overflow:hidden}
+.capbar .bar i{display:block;height:100%;background:var(--mint-deep);border-radius:99px}
+.capbar.c-clay .bar i{background:var(--orange)}
+.capbar.c-cream .bar i{background:var(--pink)}
+.capbar.c-perler .bar i{background:var(--blue)}
+
+.bkrow{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:9px;
+  border-left-width:5px}
+.bkrow.st-cancelled{opacity:.5;border-left-color:#CFC8BA!important}
+.bkhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.bkname{font-size:15px;font-weight:700}
+.bkname a{color:inherit;text-decoration:none;border-bottom:1px dashed var(--ink-soft)}
+.bkparty{font-size:12px;color:var(--ink-soft);margin-top:2px}
+.bkitems{font-size:12.5px;color:var(--ink);margin-top:7px;line-height:1.7}
+.bknote{font-size:12px;color:var(--ink-soft);margin-top:6px;background:#F7F5EC;border-radius:8px;padding:6px 9px}
+.bkfoot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)}
+.bkts{font-size:10.5px;color:#B4AC9C}
+.cancelBtn{border:1.5px solid var(--warn);background:#fff;color:var(--warn);font-size:11.5px;padding:5px 10px;
+  border-radius:8px;font-family:inherit}
+.restoreBtn{border:1.5px solid var(--ok);background:#fff;color:var(--ok);font-size:11.5px;padding:5px 10px;
+  border-radius:8px;font-family:inherit}
+.badge-cancel{font-size:10.5px;color:var(--warn);font-weight:700;background:#FBE7E2;padding:2px 8px;border-radius:99px}
+
+.empty{text-align:center;padding:44px 20px;color:var(--ink-soft);font-size:13.5px;line-height:1.8}
+.loading{text-align:center;padding:44px 20px;color:var(--ink-soft);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="top">
+    <div>
+      <h1>🐻 櫃檯後台・創藝小玩家</h1>
+      <div class="meta" id="lastUpdated">載入中…</div>
+    </div>
+    <button class="refreshBtn" id="btnRefresh">↻ 重新整理</button>
+  </div>
+  <div class="datetabs" id="dateTabs"></div>
+  <div class="searchrow">
+    <input id="searchBox" placeholder="搜尋姓名或電話…">
+    <button class="togBtn" id="btnAllDates">看全部日期</button>
+    <button class="togBtn" id="btnShowCancelled">顯示已取消</button>
+  </div>
+</div>
+
+<div class="wrap" id="view"><div class="loading">載入預約資料中…</div></div>
+
+<script>
+/* 跟預約頁面同一份設定，資料庫網址、活動日期、時段、品項上限都要保持一致 */
+const FIREBASE_URL = "https://otto2-popup-2026-default-rtdb.asia-southeast1.firebasedatabase.app";
+function buildDates(ranges){
+  const out=[];
+  ranges.forEach(([y,m,from,to])=>{
+    for(let d=from;d<=to;d++) out.push(`${y}/${String(m).padStart(2,"0")}/${String(d).padStart(2,"0")}`);
+  });
+  return out;
+}
+const EVENT_DATES = buildDates([[2026,8,17,21],[2026,8,24,28]]);
+const SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
+const ITEMS = [
+  { id:"clay",   name:"黏土",   icon:"🧸", cap:4, colorCls:"c-clay" },
+  { id:"cream",  name:"奶油膠", icon:"🍦", cap:8, colorCls:"c-cream" },
+  { id:"perler", name:"拼豆",   icon:"🔵", cap:8, colorCls:"c-perler" }
+];
+const itemOf=id=>ITEMS.find(i=>i.id===id);
+
+const pad=n=>String(n).padStart(2,"0");
+const dstr=(y,m,d)=>`${y}/${pad(m)}/${pad(d)}`;
+function weekdayOf(dateStr){
+  const [y,m,d]=dateStr.split("/").map(Number);
+  return ["日","一","二","三","四","五","六"][new Date(y,m-1,d).getDay()];
+}
+function todayStr(){
+  const n=new Date(); return dstr(n.getFullYear(),n.getMonth()+1,n.getDate());
+}
+const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ── 狀態 ── */
+let allBookings=[];       // {key, date, slot, adults, kids, items:[...], customer:{}, status, ts, ...}
+let selDate = EVENT_DATES.includes(todayStr()) ? todayStr() : EVENT_DATES[0];
+let showAllDates=false;
+let showCancelled=false;
+let searchText="";
+
+/* ── 資料讀取 ── */
+async function loadAll(){
+  try{
+    const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings.json?_="+Date.now());
+    const j=await res.json();
+    allBookings=j?Object.entries(j).map(([key,v])=>({key,...v})):[];
+    document.getElementById("lastUpdated").textContent="最後更新："+new Date().toLocaleTimeString("zh-TW",{hour12:false});
+  }catch(e){
+    document.getElementById("lastUpdated").textContent="讀取失敗，請按「重新整理」再試一次";
+  }
+}
+async function setStatus(key,status){
+  try{
+    await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings/"+key+".json",{
+      method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})
+    });
+  }catch(e){ alert("更新失敗，請檢查網路後重試。"); }
+  await loadAll(); render();
+}
+
+/* ── 篩選與統計 ── */
+function visibleBookings(){
+  return allBookings.filter(b=>{
+    if(!showAllDates && b.date!==selDate)return false;
+    if(!showCancelled && b.status==="cancelled")return false;
+    if(searchText){
+      const hay=((b.customer&&b.customer.name)||"")+((b.customer&&b.customer.phone)||"");
+      if(!hay.includes(searchText))return false;
+    }
+    return true;
+  });
+}
+/* 名額計算只看未取消的預約 */
+function bookedOf(date,slot,itemId){
+  return allBookings
+    .filter(b=>b.date===date&&b.slot===slot&&b.status!=="cancelled"&&Array.isArray(b.items))
+    .reduce((s,b)=>{
+      const it=b.items.find(x=>x.itemId===itemId);
+      return s+(it?(+it.qty||0):0);
+    },0);
+}
+
+/* ── 畫面 ── */
+function render(){
+  renderDateTabs();
+  const v=document.getElementById("view");
+  const list=visibleBookings();
+
+  if(showAllDates){
+    if(!list.length){ v.innerHTML=`<div class="empty">目前沒有符合條件的預約紀錄。</div>`; return; }
+    const byDate={};
+    list.forEach(b=>{ (byDate[b.date]=byDate[b.date]||[]).push(b); });
+    const dates=Object.keys(byDate).sort();
+    v.innerHTML=`<div class="sumrow">${sumCards(list)}</div>` +
+      dates.map(d=>`<div class="slotsec"><h2>${d}（週${weekdayOf(d)}）<span class="cnt">共 ${byDate[d].length} 筆</span></h2>
+        ${byDate[d].sort((a,b)=>a.slot.localeCompare(b.slot)).map(bookingRow).join("")}
+      </div>`).join("");
+  }else{
+    const bySlot={};
+    SLOTS.forEach(s=>bySlot[s]=[]);
+    list.forEach(b=>{ if(bySlot[b.slot])bySlot[b.slot].push(b); });
+    v.innerHTML=`<div class="sumrow">${sumCards(list)}</div>` +
+      SLOTS.map(s=>{
+        const rows=bySlot[s];
+        return `<div class="slotsec">
+          <h2>🕑 ${s}<span class="cnt">共 ${rows.length} 筆・${rows.reduce((n,b)=>n+(+b.people||0),0)} 位</span></h2>
+          <div class="capbars">${ITEMS.map(it=>{
+            const used=bookedOf(selDate,s,it.id), full=used>=it.cap;
+            return `<div class="capbar ${it.colorCls}">
+              <div class="nm">${it.icon} ${it.name}</div>
+              <div class="val ${full?'full':'ok'}">${used} / ${it.cap}</div>
+              <div class="bar"><i style="width:${Math.min(100,used/it.cap*100)}%"></i></div>
+            </div>`;
+          }).join("")}</div>
+          ${rows.length?rows.map(bookingRow).join(""):`<div class="empty" style="padding:18px">這個時段目前沒有預約。</div>`}
+        </div>`;
+      }).join("");
+  }
+
+  v.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{
+    if(confirm("確定要把這筆預約標記為取消嗎？取消後名額會釋放給其他人。"))setStatus(b.dataset.cancel,"cancelled");
+  });
+  v.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{
+    setStatus(b.dataset.restore,"new");
+  });
+}
+function sumCards(list){
+  const active=list.filter(b=>b.status!=="cancelled");
+  const people=active.reduce((s,b)=>s+(+b.people||0),0);
+  const perItem={};
+  active.forEach(b=>(b.items||[]).forEach(it=>{perItem[it.itemId]=(perItem[it.itemId]||0)+(+it.qty||0)}));
+  const cards=[`<div class="sumcard"><div class="n">${active.length}</div><div class="lb">筆預約</div></div>`,
+    `<div class="sumcard"><div class="n">${people}</div><div class="lb">總人數</div></div>`];
+  ITEMS.forEach(it=>cards.push(`<div class="sumcard"><div class="n">${perItem[it.id]||0}</div><div class="lb">${it.icon} ${it.name}</div></div>`));
+  return cards.join("");
+}
+function bookingRow(b){
+  const cancelled=b.status==="cancelled";
+  const itemsLine=(b.items||[]).map(it=>`${it.name} × ${it.qty}`).join("、");
+  const partyLine=`大人 ${b.adults||0} 位・兒童 ${b.kids||0} 位`;
+  const phone=(b.customer&&b.customer.phone)||"";
+  const name=(b.customer&&b.customer.name)||"（未填姓名）";
+  const note=(b.customer&&b.customer.note)||"";
+  const ts=b.ts?new Date(b.ts).toLocaleString("zh-TW",{hour12:false,month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+  const colorCls=(b.items&&b.items[0]&&itemOf(b.items[0].itemId)&&itemOf(b.items[0].itemId).colorCls)||"";
+  return `<div class="bkrow ${colorCls} ${cancelled?'st-cancelled':''}">
+    <div class="bkhead">
+      <div>
+        <div class="bkname">${showAllDates?`${b.date}（週${weekdayOf(b.date)}）${b.slot}　`:''}${esc(name)}${phone?` <a href="tel:${phone}">${esc(phone)}</a>`:''}</div>
+        <div class="bkparty">${partyLine}</div>
+      </div>
+      ${cancelled?'<span class="badge-cancel">已取消</span>':''}
+    </div>
+    <div class="bkitems">${esc(itemsLine)||"（無品項資料）"}</div>
+    ${note?`<div class="bknote">備註：${esc(note)}</div>`:''}
+    <div class="bkfoot">
+      <span class="bkts">${ts}${b.key?'　編號 '+b.key.slice(-6).toUpperCase():''}</span>
+      ${cancelled
+        ? `<button class="restoreBtn" data-restore="${b.key}">還原</button>`
+        : `<button class="cancelBtn" data-cancel="${b.key}">標記取消</button>`}
+    </div>
+  </div>`;
+}
+function renderDateTabs(){
+  const el=document.getElementById("dateTabs");
+  el.innerHTML=EVENT_DATES.map(d=>`<button class="dtab ${!showAllDates&&d===selDate?'on':''}" data-d="${d}">
+    <b>${+d.split("/")[2]}</b>週${weekdayOf(d)}</button>`).join("");
+  el.querySelectorAll(".dtab").forEach(b=>b.onclick=()=>{
+    selDate=b.dataset.d; showAllDates=false; syncToggleBtns(); render();
+  });
+}
+function syncToggleBtns(){
+  document.getElementById("btnAllDates").className="togBtn"+(showAllDates?" on":"");
+  document.getElementById("btnAllDates").textContent=showAllDates?"只看單日":"看全部日期";
+  document.getElementById("btnShowCancelled").className="togBtn"+(showCancelled?" on":"");
+}
+
+/* ── 事件綁定 ── */
+document.getElementById("btnRefresh").onclick=async()=>{ await loadAll(); render(); };
+document.getElementById("btnAllDates").onclick=()=>{ showAllDates=!showAllDates; syncToggleBtns(); render(); };
+document.getElementById("btnShowCancelled").onclick=()=>{ showCancelled=!showCancelled; syncToggleBtns(); render(); };
+let searchDeb;
+document.getElementById("searchBox").oninput=e=>{
+  clearTimeout(searchDeb);
+  searchDeb=setTimeout(()=>{ searchText=e.target.value.trim(); render(); },200);
+};
+
+/* 每 30 秒自動刷新一次，櫃檯開著螢幕不用一直手動按 */
+(async function boot(){
+  await loadAll();
+  syncToggleBtns();
+  render();
+  setInterval(async()=>{ await loadAll(); render(); },30000);
+})();
+</script>
+</body>
+</html>
