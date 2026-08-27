@@ -28,6 +28,27 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
   font-size:13px;font-family:inherit;font-weight:700;white-space:nowrap}
 .refreshBtn:active{background:rgba(255,255,255,.34)}
 
+.viewtabs{display:flex;gap:8px;margin-top:14px}
+.vtab{flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(255,255,255,.4);
+  background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:13px;font-weight:700}
+.vtab.on{background:#fff;color:var(--mint-deep);border-color:#fff}
+
+.schedwrap{max-width:520px;margin:0 auto;padding:16px}
+.schedadd{display:flex;gap:8px;margin-bottom:16px}
+.schedadd input{flex:1;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit}
+.schedadd button{padding:11px 16px;border:none;border-radius:10px;background:var(--mint-deep);color:#fff;
+  font-size:13.5px;font-weight:700;font-family:inherit;white-space:nowrap}
+.schedmonth{font-family:'ZCOOL KuaiLe',sans-serif;font-size:15px;color:var(--mint-deep);margin:16px 0 8px}
+.schedmonth:first-child{margin-top:0}
+.schedrow{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);
+  border-radius:12px;padding:10px 13px;margin-bottom:8px}
+.schedrow.past{opacity:.5}
+.schedrow .d{font-weight:700;flex:1}
+.schedrow .d small{color:var(--ink-soft);font-weight:400;margin-left:6px}
+.schedtoggle{border:none;padding:7px 14px;border-radius:99px;font-size:12.5px;font-weight:700;font-family:inherit}
+.schedtoggle.open{background:#DFF5EC;color:var(--ok)}
+.schedtoggle.closed{background:#F3EFE4;color:var(--ink-soft)}
+
 .datetabs{display:flex;gap:7px;overflow-x:auto;margin-top:14px;padding-bottom:2px;scrollbar-width:none}
 .datetabs::-webkit-scrollbar{display:none}
 .dtab{flex:0 0 auto;padding:8px 12px;border-radius:11px;border:1.5px solid rgba(255,255,255,.4);
@@ -85,6 +106,14 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 .restoreBtn{border:1.5px solid var(--ok);background:#fff;color:var(--ok);font-size:11.5px;padding:5px 10px;
   border-radius:8px;font-family:inherit}
 .badge-cancel{font-size:10.5px;color:var(--warn);font-weight:700;background:#FBE7E2;padding:2px 8px;border-radius:99px}
+.badge-attended{font-size:10.5px;color:var(--ok);font-weight:700;background:#DFF5EC;padding:2px 8px;border-radius:99px}
+.bkrow.st-attended{background:#FAFEFC;border-color:#CDEDE0}
+.bkbtns{display:flex;gap:7px}
+.attendBtn{border:1.5px solid var(--ok);background:#fff;color:var(--ok);font-size:11.5px;padding:5px 10px;
+  border-radius:8px;font-family:inherit;font-weight:700}
+.attendedOnBtn{border:1.5px solid var(--ok);background:var(--ok);color:#fff;font-size:11.5px;padding:5px 10px;
+  border-radius:8px;font-family:inherit;font-weight:700}
+.sumcard .n.att{color:var(--ok)}
 
 .empty{text-align:center;padding:44px 20px;color:var(--ink-soft);font-size:13.5px;line-height:1.8}
 .loading{text-align:center;padding:44px 20px;color:var(--ink-soft);font-size:13.5px}
@@ -99,8 +128,12 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
     </div>
     <button class="refreshBtn" id="btnRefresh">↻ 重新整理</button>
   </div>
+  <div class="viewtabs">
+    <button class="vtab on" id="vtBookings">📋 預約總覽</button>
+    <button class="vtab" id="vtSchedule">🗓️ 課程日期管理</button>
+  </div>
   <div class="datetabs" id="dateTabs"></div>
-  <div class="searchrow">
+  <div class="searchrow" id="searchRow">
     <input id="searchBox" placeholder="搜尋姓名或電話…">
     <button class="togBtn" id="btnAllDates">看全部日期</button>
     <button class="togBtn" id="btnShowCancelled">顯示已取消</button>
@@ -110,7 +143,7 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 <div class="wrap" id="view"><div class="loading">載入預約資料中…</div></div>
 
 <script>
-/* 跟預約頁面同一份設定，資料庫網址、活動日期、時段、品項上限都要保持一致 */
+/* 跟預約頁面同一份設定，資料庫網址、時段、品項上限都要保持一致 */
 const FIREBASE_URL = "https://otto2-popup-2026-default-rtdb.asia-southeast1.firebasedatabase.app";
 function buildDates(ranges){
   const out=[];
@@ -119,7 +152,9 @@ function buildDates(ranges){
   });
   return out;
 }
-const EVENT_DATES = buildDates([[2026,8,17,21],[2026,8,24,28]]);
+const DEFAULT_DATES = buildDates([[2026,8,17,21],[2026,8,24,28]]);
+let OPEN_DATES = DEFAULT_DATES.slice();      // 開放中的日期（保底清單＋後台新增，扣掉後台關閉的）
+let SCHEDULE_RAW = {};                        // 後台目前每個日期的開關狀態（key 用 dash 格式）
 const SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
 const ITEMS = [
   { id:"clay",   name:"黏土",   icon:"🧸", cap:4, colorCls:"c-clay" },
@@ -127,6 +162,8 @@ const ITEMS = [
   { id:"perler", name:"拼豆",   icon:"🔵", cap:8, colorCls:"c-perler" }
 ];
 const itemOf=id=>ITEMS.find(i=>i.id===id);
+const toKey=d=>d.replace(/\//g,"-");     // Firebase key 不能有斜線
+const fromKey=k=>k.replace(/-/g,"/");
 
 const pad=n=>String(n).padStart(2,"0");
 const dstr=(y,m,d)=>`${y}/${pad(m)}/${pad(d)}`;
@@ -141,10 +178,35 @@ const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 
 /* ── 狀態 ── */
 let allBookings=[];       // {key, date, slot, adults, kids, items:[...], customer:{}, status, ts, ...}
-let selDate = EVENT_DATES.includes(todayStr()) ? todayStr() : EVENT_DATES[0];
+let selDate = "";
 let showAllDates=false;
 let showCancelled=false;
 let searchText="";
+let viewMode="bookings";  // "bookings" | "schedule"
+
+/* ── 資料讀取 ── */
+async function loadSchedule(){
+  SCHEDULE_RAW={};
+  if(FIREBASE_URL){
+    try{
+      const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule.json?_="+Date.now());
+      SCHEDULE_RAW=(await res.json())||{};
+    }catch(e){ SCHEDULE_RAW={}; }
+  }
+  const set={};
+  DEFAULT_DATES.forEach(d=>set[d]=true);
+  Object.keys(SCHEDULE_RAW).forEach(k=>{ set[fromKey(k)]=!!SCHEDULE_RAW[k]; });
+  OPEN_DATES=Object.keys(set).filter(d=>set[d]).sort();
+  if(!selDate||!OPEN_DATES.includes(selDate)) selDate = OPEN_DATES.includes(todayStr()) ? todayStr() : (OPEN_DATES[0]||"");
+}
+async function setDateOpen(dateStr,open){
+  try{
+    await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule/"+toKey(dateStr)+".json",{
+      method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(open)
+    });
+  }catch(e){ alert("更新失敗，請檢查網路後重試。"); }
+  await loadSchedule(); renderSchedule();
+}
 
 /* ── 資料讀取 ── */
 async function loadAll(){
@@ -161,6 +223,14 @@ async function setStatus(key,status){
   try{
     await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings/"+key+".json",{
       method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})
+    });
+  }catch(e){ alert("更新失敗，請檢查網路後重試。"); }
+  await loadAll(); render();
+}
+async function setAttended(key,attended){
+  try{
+    await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings/"+key+".json",{
+      method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({attended})
     });
   }catch(e){ alert("更新失敗，請檢查網路後重試。"); }
   await loadAll(); render();
@@ -191,6 +261,8 @@ function bookedOf(date,slot,itemId){
 /* ── 畫面 ── */
 function render(){
   renderDateTabs();
+  document.getElementById("searchRow").style.display=viewMode==="bookings"?"flex":"none";
+  if(viewMode==="schedule"){ renderSchedule(); return; }
   const v=document.getElementById("view");
   const list=visibleBookings();
 
@@ -231,19 +303,25 @@ function render(){
   v.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{
     setStatus(b.dataset.restore,"new");
   });
+  v.querySelectorAll("[data-attend]").forEach(b=>b.onclick=()=>{
+    setAttended(b.dataset.attend, b.dataset.cur!=="1");
+  });
 }
 function sumCards(list){
   const active=list.filter(b=>b.status!=="cancelled");
   const people=active.reduce((s,b)=>s+(+b.people||0),0);
+  const attended=active.filter(b=>b.attended).length;
   const perItem={};
   active.forEach(b=>(b.items||[]).forEach(it=>{perItem[it.itemId]=(perItem[it.itemId]||0)+(+it.qty||0)}));
   const cards=[`<div class="sumcard"><div class="n">${active.length}</div><div class="lb">筆預約</div></div>`,
-    `<div class="sumcard"><div class="n">${people}</div><div class="lb">總人數</div></div>`];
+    `<div class="sumcard"><div class="n">${people}</div><div class="lb">總人數</div></div>`,
+    `<div class="sumcard"><div class="n att">${attended}／${active.length}</div><div class="lb">已報到</div></div>`];
   ITEMS.forEach(it=>cards.push(`<div class="sumcard"><div class="n">${perItem[it.id]||0}</div><div class="lb">${it.icon} ${it.name}</div></div>`));
   return cards.join("");
 }
 function bookingRow(b){
   const cancelled=b.status==="cancelled";
+  const attended=!!b.attended;
   const itemsLine=(b.items||[]).map(it=>`${esc(it.person||'')}　${it.name}`).join("　｜　");
   const partyLine=`大人 ${b.adults||0} 位・兒童 ${b.kids||0} 位`;
   const phone=(b.customer&&b.customer.phone)||"";
@@ -251,27 +329,32 @@ function bookingRow(b){
   const note=(b.customer&&b.customer.note)||"";
   const ts=b.ts?new Date(b.ts).toLocaleString("zh-TW",{hour12:false,month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
   const colorCls=(b.items&&b.items[0]&&itemOf(b.items[0].itemId)&&itemOf(b.items[0].itemId).colorCls)||"";
-  return `<div class="bkrow ${colorCls} ${cancelled?'st-cancelled':''}">
+  return `<div class="bkrow ${colorCls} ${cancelled?'st-cancelled':''} ${attended?'st-attended':''}">
     <div class="bkhead">
       <div>
         <div class="bkname">${showAllDates?`${b.date}（週${weekdayOf(b.date)}）${b.slot}　`:''}${esc(name)}${phone?` <a href="tel:${phone}">${esc(phone)}</a>`:''}</div>
         <div class="bkparty">${partyLine}</div>
       </div>
+      ${attended&&!cancelled?'<span class="badge-attended">✓ 已報到</span>':''}
       ${cancelled?'<span class="badge-cancel">已取消</span>':''}
     </div>
     <div class="bkitems">${itemsLine||"（無品項資料）"}</div>
     ${note?`<div class="bknote">備註：${esc(note)}</div>`:''}
     <div class="bkfoot">
       <span class="bkts">${ts}${b.key?'　編號 '+b.key.slice(-6).toUpperCase():''}</span>
-      ${cancelled
-        ? `<button class="restoreBtn" data-restore="${b.key}">還原</button>`
-        : `<button class="cancelBtn" data-cancel="${b.key}">標記取消</button>`}
+      <span class="bkbtns">
+        ${!cancelled?`<button class="${attended?'attendedOnBtn':'attendBtn'}" data-attend="${b.key}" data-cur="${attended?1:0}">${attended?'✓ 已報到':'標記報到'}</button>`:''}
+        ${cancelled
+          ? `<button class="restoreBtn" data-restore="${b.key}">還原</button>`
+          : `<button class="cancelBtn" data-cancel="${b.key}">標記取消</button>`}
+      </span>
     </div>
   </div>`;
 }
 function renderDateTabs(){
   const el=document.getElementById("dateTabs");
-  el.innerHTML=EVENT_DATES.map(d=>`<button class="dtab ${!showAllDates&&d===selDate?'on':''}" data-d="${d}">
+  if(viewMode!=="bookings"){ el.innerHTML=""; return; }
+  el.innerHTML=OPEN_DATES.map(d=>`<button class="dtab ${!showAllDates&&d===selDate?'on':''}" data-d="${d}">
     <b>${+d.split("/")[2]}</b>週${weekdayOf(d)}</button>`).join("");
   el.querySelectorAll(".dtab").forEach(b=>b.onclick=()=>{
     selDate=b.dataset.d; showAllDates=false; syncToggleBtns(); render();
@@ -283,10 +366,61 @@ function syncToggleBtns(){
   document.getElementById("btnShowCancelled").className="togBtn"+(showCancelled?" on":"");
 }
 
+/* ── 課程日期管理 ── */
+function renderSchedule(){
+  const today=todayStr();
+  const set={};
+  DEFAULT_DATES.forEach(d=>set[d]=true);
+  Object.keys(SCHEDULE_RAW).forEach(k=>{ set[fromKey(k)]=!!SCHEDULE_RAW[k]; });
+  const all=Object.keys(set).sort();
+  const byMonth={};
+  all.forEach(d=>{ const mk=d.slice(0,7); (byMonth[mk]=byMonth[mk]||[]).push(d); });
+  const months=Object.keys(byMonth).sort();
+  document.getElementById("view").innerHTML=`<div class="schedwrap">
+    <div class="schedadd">
+      <input type="date" id="newDateInput">
+      <button id="btnAddDate">＋ 新增日期</button>
+    </div>
+    ${months.map(mk=>`<div class="schedmonth">${+mk.slice(5,7)} 月</div>
+      ${byMonth[mk].map(d=>{
+        const open=set[d];
+        const past=d<today;
+        return `<div class="schedrow ${past?'past':''}">
+          <span class="d">${d}（週${weekdayOf(d)}）${past?'<small>已過期</small>':''}</span>
+          <button class="schedtoggle ${open?'open':'closed'}" data-d="${d}" data-open="${open?1:0}">${open?'開放中':'已關閉'}</button>
+        </div>`;
+      }).join("")}
+    `).join("")}
+  </div>`;
+  document.getElementById("btnAddDate").onclick=async()=>{
+    const v=document.getElementById("newDateInput").value; // "2026-08-30"
+    if(!v)return;
+    await setDateOpen(v.replace(/-/g,"/"),true);
+  };
+  document.querySelectorAll(".schedtoggle").forEach(b=>b.onclick=()=>{
+    setDateOpen(b.dataset.d, b.dataset.open!=="1");
+  });
+}
+
 /* ── 事件綁定 ── */
-document.getElementById("btnRefresh").onclick=async()=>{ await loadAll(); render(); };
+document.getElementById("btnRefresh").onclick=async()=>{
+  if(viewMode==="schedule"){ await loadSchedule(); render(); }
+  else{ await loadAll(); render(); }
+};
 document.getElementById("btnAllDates").onclick=()=>{ showAllDates=!showAllDates; syncToggleBtns(); render(); };
 document.getElementById("btnShowCancelled").onclick=()=>{ showCancelled=!showCancelled; syncToggleBtns(); render(); };
+document.getElementById("vtBookings").onclick=()=>{
+  viewMode="bookings";
+  document.getElementById("vtBookings").className="vtab on";
+  document.getElementById("vtSchedule").className="vtab";
+  render();
+};
+document.getElementById("vtSchedule").onclick=async()=>{
+  viewMode="schedule";
+  document.getElementById("vtSchedule").className="vtab on";
+  document.getElementById("vtBookings").className="vtab";
+  await loadSchedule(); render();
+};
 let searchDeb;
 document.getElementById("searchBox").oninput=e=>{
   clearTimeout(searchDeb);
@@ -295,10 +429,14 @@ document.getElementById("searchBox").oninput=e=>{
 
 /* 每 30 秒自動刷新一次，櫃檯開著螢幕不用一直手動按 */
 (async function boot(){
+  await loadSchedule();
   await loadAll();
   syncToggleBtns();
   render();
-  setInterval(async()=>{ await loadAll(); render(); },30000);
+  setInterval(async()=>{
+    if(viewMode==="schedule")await loadSchedule(); else await loadAll();
+    render();
+  },30000);
 })();
 </script>
 </body>
