@@ -34,20 +34,25 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 .vtab.on{background:#fff;color:var(--mint-deep);border-color:#fff}
 
 .schedwrap{max-width:520px;margin:0 auto;padding:16px}
-.schedadd{display:flex;gap:8px;margin-bottom:16px}
-.schedadd input{flex:1;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit}
-.schedadd button{padding:11px 16px;border:none;border-radius:10px;background:var(--mint-deep);color:#fff;
-  font-size:13.5px;font-weight:700;font-family:inherit;white-space:nowrap}
+.schedadd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px}
+.schedadd input[type=date]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;
+  font-size:14px;font-family:inherit;margin-bottom:10px}
+.schedaddslots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.slotchk{display:flex;align-items:center;gap:5px;font-size:12.5px;background:#F7F5EC;border-radius:8px;padding:6px 10px}
+.schedadd button{width:100%;padding:11px 16px;border:none;border-radius:10px;background:var(--mint-deep);color:#fff;
+  font-size:13.5px;font-weight:700;font-family:inherit}
 .schedmonth{font-family:'ZCOOL KuaiLe',sans-serif;font-size:15px;color:var(--mint-deep);margin:16px 0 8px}
 .schedmonth:first-child{margin-top:0}
-.schedrow{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);
-  border-radius:12px;padding:10px 13px;margin-bottom:8px}
-.schedrow.past{opacity:.5}
-.schedrow .d{font-weight:700;flex:1}
+.schedrow{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.schedrow.past{opacity:.55}
+.schedrowhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.schedrow .d{font-weight:700}
 .schedrow .d small{color:var(--ink-soft);font-weight:400;margin-left:6px}
-.schedtoggle{border:none;padding:7px 14px;border-radius:99px;font-size:12.5px;font-weight:700;font-family:inherit}
-.schedtoggle.open{background:#DFF5EC;color:var(--ok)}
-.schedtoggle.closed{background:#F3EFE4;color:var(--ink-soft)}
+.schedcount{font-size:11.5px;color:var(--ink-soft)}
+.schedslots{display:flex;gap:7px;flex-wrap:wrap}
+.slotToggle{border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);padding:6px 12px;
+  border-radius:9px;font-size:12px;font-weight:700;font-family:inherit}
+.slotToggle.on{background:var(--mint-deep);border-color:var(--mint-deep);color:#fff}
 
 .datetabs{display:flex;gap:7px;overflow-x:auto;margin-top:14px;padding-bottom:2px;scrollbar-width:none}
 .datetabs::-webkit-scrollbar{display:none}
@@ -155,7 +160,9 @@ function buildDates(ranges){
 const DEFAULT_DATES = buildDates([[2026,8,17,21],[2026,8,24,28]]);
 let OPEN_DATES = DEFAULT_DATES.slice();      // 開放中的日期（保底清單＋後台新增，扣掉後台關閉的）
 let SCHEDULE_RAW = {};                        // 後台目前每個日期的開關狀態（key 用 dash 格式）
-const SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
+const SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00","19:00-21:00"];
+/* 保底清單（DEFAULT_DATES）預設只開放白天時段，晚上場要在後台個別勾選開放 */
+const DEFAULT_SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
 const ITEMS = [
   { id:"clay",   name:"黏土",   icon:"🧸", cap:4, colorCls:"c-clay" },
   { id:"cream",  name:"奶油膠", icon:"🍦", cap:8, colorCls:"c-cream" },
@@ -185,33 +192,66 @@ let searchText="";
 let viewMode="bookings";  // "bookings" | "schedule"
 
 /* ── 資料讀取 ── */
+/* SCHEDULE_RAW： { "2026/08/30": ["14:00-15:00","16:00-17:00"] }（陣列＝該日開放的時段）
+   為了相容比較早期版本，值也可能是 true（＝全部時段開放）或 false（＝整天關閉）。 */
 async function loadSchedule(){
   SCHEDULE_RAW={};
   if(FIREBASE_URL){
     try{
       const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule.json?_="+Date.now());
-      SCHEDULE_RAW=(await res.json())||{};
+      if(!res.ok){
+        console.warn("讀取 popupSchedule 失敗，HTTP "+res.status);
+      }else{
+        const raw=(await res.json())||{};
+        Object.keys(raw).forEach(k=>{ SCHEDULE_RAW[fromKey(k)]=raw[k]; });
+      }
     }catch(e){ SCHEDULE_RAW={}; }
   }
-  const set={};
-  DEFAULT_DATES.forEach(d=>set[d]=true);
-  Object.keys(SCHEDULE_RAW).forEach(k=>{ set[fromKey(k)]=!!SCHEDULE_RAW[k]; });
-  OPEN_DATES=Object.keys(set).filter(d=>set[d]).sort();
+  recomputeOpenDates();
+}
+/* 這個日期實際開放的時段陣列 */
+function effectiveSlots(date){
+  if(Object.prototype.hasOwnProperty.call(SCHEDULE_RAW,date)){
+    const v=SCHEDULE_RAW[date];
+    if(v===true)return SLOTS.slice();
+    if(v===false)return [];
+    if(Array.isArray(v))return v.filter(s=>SLOTS.includes(s));
+    return [];
+  }
+  return DEFAULT_DATES.includes(date)?DEFAULT_SLOTS.slice():[];
+}
+function recomputeOpenDates(){
+  const set=new Set(DEFAULT_DATES.concat(Object.keys(SCHEDULE_RAW)));
+  OPEN_DATES=Array.from(set).filter(d=>effectiveSlots(d).length>0).sort();
   if(!selDate||!OPEN_DATES.includes(selDate)) selDate = OPEN_DATES.includes(todayStr()) ? todayStr() : (OPEN_DATES[0]||"");
 }
-async function setDateOpen(dateStr,open){
+/* 把某天的開放時段整組寫回 Firebase；slotsArr 是要開放的時段字串陣列（[] 代表整天關閉） */
+async function setDateSlots(dateStr,slotsArr){
+  if(!FIREBASE_URL){ alert("尚未設定 FIREBASE_URL，無法寫入。"); return; }
   try{
-    await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule/"+toKey(dateStr)+".json",{
-      method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(open)
+    const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule/"+toKey(dateStr)+".json",{
+      method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(slotsArr)
     });
-  }catch(e){ alert("更新失敗，請檢查網路後重試。"); }
+    if(!res.ok){
+      const t=await res.text().catch(()=> "");
+      alert("寫入失敗（HTTP "+res.status+"）。\n很可能是 Firebase 規則沒有開放 popupSchedule 這個路徑的讀寫權限，請到 Realtime Database →「規則」分頁確認。\n"+t);
+      return;
+    }
+  }catch(e){
+    alert("更新失敗，請檢查網路連線後重試：\n"+e.message);
+    return;
+  }
   await loadSchedule(); renderSchedule();
 }
 
-/* ── 資料讀取 ── */
+/* ── 預約資料讀取／更新 ── */
 async function loadAll(){
   try{
     const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings.json?_="+Date.now());
+    if(!res.ok){
+      document.getElementById("lastUpdated").textContent="讀取失敗（HTTP "+res.status+"），請確認 Firebase 規則";
+      return;
+    }
     const j=await res.json();
     allBookings=j?Object.entries(j).map(([key,v])=>({key,...v})):[];
     document.getElementById("lastUpdated").textContent="最後更新："+new Date().toLocaleTimeString("zh-TW",{hour12:false});
@@ -221,18 +261,20 @@ async function loadAll(){
 }
 async function setStatus(key,status){
   try{
-    await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings/"+key+".json",{
+    const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings/"+key+".json",{
       method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})
     });
-  }catch(e){ alert("更新失敗，請檢查網路後重試。"); }
+    if(!res.ok){ alert("更新失敗（HTTP "+res.status+"），請確認 Firebase 規則。"); return; }
+  }catch(e){ alert("更新失敗，請檢查網路後重試：\n"+e.message); return; }
   await loadAll(); render();
 }
 async function setAttended(key,attended){
   try{
-    await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings/"+key+".json",{
+    const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupBookings/"+key+".json",{
       method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({attended})
     });
-  }catch(e){ alert("更新失敗，請檢查網路後重試。"); }
+    if(!res.ok){ alert("更新失敗（HTTP "+res.status+"），請確認 Firebase 規則。"); return; }
+  }catch(e){ alert("更新失敗，請檢查網路後重試：\n"+e.message); return; }
   await loadAll(); render();
 }
 
@@ -367,38 +409,51 @@ function syncToggleBtns(){
 }
 
 /* ── 課程日期管理 ── */
+const SLOT_SHORT={"14:00-15:00":"14-15","15:00-16:00":"15-16","16:00-17:00":"16-17","17:00-18:00":"17-18","19:00-21:00":"19-21晚"};
 function renderSchedule(){
   const today=todayStr();
-  const set={};
-  DEFAULT_DATES.forEach(d=>set[d]=true);
-  Object.keys(SCHEDULE_RAW).forEach(k=>{ set[fromKey(k)]=!!SCHEDULE_RAW[k]; });
-  const all=Object.keys(set).sort();
+  const all=Array.from(new Set(DEFAULT_DATES.concat(Object.keys(SCHEDULE_RAW)))).sort();
   const byMonth={};
   all.forEach(d=>{ const mk=d.slice(0,7); (byMonth[mk]=byMonth[mk]||[]).push(d); });
   const months=Object.keys(byMonth).sort();
   document.getElementById("view").innerHTML=`<div class="schedwrap">
     <div class="schedadd">
       <input type="date" id="newDateInput">
-      <button id="btnAddDate">＋ 新增日期</button>
+      <div class="schedaddslots">
+        ${SLOTS.map((s,i)=>`<label class="slotchk"><input type="checkbox" class="newSlotChk" value="${s}" ${i<4?'checked':''}> ${SLOT_SHORT[s]}</label>`).join("")}
+      </div>
+      <button id="btnAddDate">＋ 新增／更新日期</button>
     </div>
     ${months.map(mk=>`<div class="schedmonth">${+mk.slice(5,7)} 月</div>
       ${byMonth[mk].map(d=>{
-        const open=set[d];
+        const openSlots=effectiveSlots(d);
         const past=d<today;
         return `<div class="schedrow ${past?'past':''}">
-          <span class="d">${d}（週${weekdayOf(d)}）${past?'<small>已過期</small>':''}</span>
-          <button class="schedtoggle ${open?'open':'closed'}" data-d="${d}" data-open="${open?1:0}">${open?'開放中':'已關閉'}</button>
+          <div class="schedrowhead">
+            <span class="d">${d}（週${weekdayOf(d)}）${past?'<small>已過期</small>':''}</span>
+            <span class="schedcount">${openSlots.length?openSlots.length+' 個時段開放':'整天關閉'}</span>
+          </div>
+          <div class="schedslots">
+            ${SLOTS.map(s=>{
+              const on=openSlots.includes(s);
+              return `<button class="slotToggle ${on?'on':''}" data-d="${d}" data-s="${s}">${SLOT_SHORT[s]}</button>`;
+            }).join("")}
+          </div>
         </div>`;
       }).join("")}
     `).join("")}
   </div>`;
   document.getElementById("btnAddDate").onclick=async()=>{
     const v=document.getElementById("newDateInput").value; // "2026-08-30"
-    if(!v)return;
-    await setDateOpen(v.replace(/-/g,"/"),true);
+    if(!v){ alert("請先選擇日期。"); return; }
+    const checked=Array.from(document.querySelectorAll(".newSlotChk:checked")).map(c=>c.value);
+    await setDateSlots(v.replace(/-/g,"/"), checked);
   };
-  document.querySelectorAll(".schedtoggle").forEach(b=>b.onclick=()=>{
-    setDateOpen(b.dataset.d, b.dataset.open!=="1");
+  document.querySelectorAll(".slotToggle").forEach(b=>b.onclick=()=>{
+    const d=b.dataset.d, s=b.dataset.s;
+    const cur=effectiveSlots(d);
+    const next=cur.includes(s) ? cur.filter(x=>x!==s) : SLOTS.filter(x=>cur.includes(x)||x===s);
+    setDateSlots(d,next);
   });
 }
 

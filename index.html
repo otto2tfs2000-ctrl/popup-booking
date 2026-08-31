@@ -168,6 +168,18 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 .next{flex:1;padding:15px;border:none;border-radius:14px;background:var(--mint-deep);color:#fff;
   font-size:16.5px;font-weight:700;letter-spacing:2px;font-family:inherit;box-shadow:0 4px 0 #0B7E70}
 .next:disabled{background:#C7CBC4;box-shadow:none}
+
+/* ── 選時段後的提示視窗 ── */
+.modalOverlay{display:none;position:fixed;inset:0;background:rgba(26,40,36,.55);z-index:100;
+  align-items:center;justify-content:center;padding:24px}
+.noticeCard{background:#fff;border-radius:24px;padding:26px 22px 22px;max-width:340px;width:100%;
+  text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.2)}
+.noticeIcon{font-size:40px;margin-bottom:8px}
+.noticeCard h3{font-family:'ZCOOL KuaiLe',sans-serif;font-size:19px;color:var(--mint-deep);margin-bottom:10px}
+.noticeCard p{font-size:14px;color:var(--ink);line-height:1.85;margin-bottom:18px}
+.noticeCard p b{color:var(--mint-deep)}
+.noticeCard button{width:100%;padding:13px;border:none;border-radius:14px;background:var(--mint-deep);color:#fff;
+  font-size:15px;font-weight:700;font-family:inherit;box-shadow:0 4px 0 #0B7E70}
 </style>
 </head>
 <body>
@@ -175,7 +187,7 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
   <span class="mascot">🐻</span>
   <div class="brand"><span class="paw">🐾</span>Otto2 台中旗艦店</div>
   <h1>創藝小玩家<br>隨選隨做工作坊</h1>
-  <div class="sub">活動日期｜8/17–8/21、8/24–8/28（週一至週五）<br>開放時段｜每日下午 2:00–6:00，每小時一個時段</div>
+  <div class="sub">活動日期｜8/17–8/21、8/24–8/28（週一至週五）<br>開放時段｜下午 2:00–6:00・晚上 7:00–9:00（實際時段依當日開放為準）</div>
   <div class="tagrow">
     <span class="tag t-clay">黏土創作</span>
     <span class="tag t-cream">奶油膠DIY</span>
@@ -195,6 +207,15 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
   <div class="btnrow">
     <button class="back" id="btnBack" style="display:none">←</button>
     <button class="next" id="btnNext">下一步 →</button>
+  </div>
+</div>
+
+<div class="modalOverlay" id="noticeModal">
+  <div class="noticeCard">
+    <div class="noticeIcon">🐻⏰</div>
+    <h3>貼心小提醒</h3>
+    <p>您預約的是<b>「課程開始」</b>的時間喔！<br>實際完成作品所需的時間，會依照當天挑戰的<b>作品難易度</b>略有不同，請保留充裕時間慢慢創作 😊</p>
+    <button id="noticeOk">我知道了</button>
   </div>
 </div>
 
@@ -225,7 +246,9 @@ const DEFAULT_DATES = buildDates([[2026,8,17,21],[2026,8,24,28]]);
 let OPEN_DATES = DEFAULT_DATES.slice(); // 開機時會用 Firebase 的 /popupSchedule 資料覆蓋/合併
 
 /* 每日開放時段：下午 2:00–6:00，每小時一區間 */
-const SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
+const SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00","19:00-21:00"];
+/* 保底清單（DEFAULT_DATES）預設只開放白天時段，晚上場要在後台個別勾選開放 */
+const DEFAULT_SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
 
 /* 開課前幾小時截止線上自行預約，超過這個時間只能改成電洽/私訊老師。
    要調整成 4 小時或 8 小時，改這個數字就好。 */
@@ -285,9 +308,9 @@ function slotTooSoon(date,slot){
   if(start<=now)return false;
   return (start-now) < CUTOFF_HOURS*3600*1000;
 }
-/* 這個時段目前是否還能線上預約（沒過期、沒在截止線內、至少一個品項有名額） */
+/* 這個時段目前是否還能線上預約（有開放、沒過期、沒在截止線內、至少一個品項有名額） */
 function slotBookable(date,slot){
-  return !slotPassed(date,slot) && !slotTooSoon(date,slot) && slotHasRoom(date,slot);
+  return effectiveSlots(date).includes(slot) && !slotPassed(date,slot) && !slotTooSoon(date,slot) && slotHasRoom(date,slot);
 }
 function itemOf(id){ return ITEMS.find(i=>i.id===id); }
 function partyNeed(){ return adults+kids; }
@@ -338,22 +361,34 @@ function availableFor(itemId,excludeIdx){
   return dbLeft(selDate,selSlot,itemId) - rosterCount(itemId,excludeIdx);
 }
 
-/* 讀取後台「課程日期管理」新增/關閉過的日期，跟保底清單合併。
-   規則：保底清單預設開放；後台若把某天設成 false，代表關閉（就算是保底清單裡的日期也會被關掉）。 */
+/* 讀取後台「課程日期管理」新增/調整過的日期與時段，跟保底清單合併。
+   SCHEDULE_MAP 的值可能是：陣列＝該日開放的時段清單；true＝全部時段開放；false／不存在＝用保底清單。 */
+let SCHEDULE_MAP={};
 async function loadSchedule(){
-  let sch={};
+  SCHEDULE_MAP={};
   if(FIREBASE_URL){
     try{
       const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule.json");
-      const raw=(await res.json())||{};
-      // Firebase 的 key 不能有斜線，後台存的時候用 2026-08-17 這種格式，這裡轉回 2026/08/17
-      Object.keys(raw).forEach(k=>{ sch[k.replace(/-/g,"/")]=raw[k]; });
-    }catch(e){ sch={}; }
+      if(res.ok){
+        const raw=(await res.json())||{};
+        // Firebase 的 key 不能有斜線，後台存的時候用 2026-08-17 這種格式，這裡轉回 2026/08/17
+        Object.keys(raw).forEach(k=>{ SCHEDULE_MAP[k.replace(/-/g,"/")]=raw[k]; });
+      }
+    }catch(e){ SCHEDULE_MAP={}; }
   }
-  const set={};
-  DEFAULT_DATES.forEach(d=>set[d]=true);
-  Object.keys(sch).forEach(d=>{ set[d]=!!sch[d]; });
-  OPEN_DATES=Object.keys(set).filter(d=>set[d]).sort();
+  const set=new Set(DEFAULT_DATES.concat(Object.keys(SCHEDULE_MAP)));
+  OPEN_DATES=Array.from(set).filter(d=>effectiveSlots(d).length>0).sort();
+}
+/* 這個日期實際開放的時段陣列 */
+function effectiveSlots(date){
+  if(Object.prototype.hasOwnProperty.call(SCHEDULE_MAP,date)){
+    const v=SCHEDULE_MAP[date];
+    if(v===true)return SLOTS.slice();
+    if(v===false)return [];
+    if(Array.isArray(v))return v.filter(s=>SLOTS.includes(s));
+    return [];
+  }
+  return DEFAULT_DATES.includes(date)?DEFAULT_SLOTS.slice():[];
 }
 function monthKeyOf(dateStr){ return dateStr.slice(0,7); } // "2026/08"
 function monthLabelOf(key){ return +key.slice(5,7)+"月"; }
@@ -439,15 +474,17 @@ function renderDateSlot(){
   };
   let slotHtml="";
   if(selDate){
+    const daySlots=effectiveSlots(selDate);
     slotHtml=`<div class="slots"><h3>${selDate}（週${weekdayOf(selDate)}）可預約時段</h3><div class="slotrow">
-      ${SLOTS.map(s=>{
+      ${(daySlots.length?daySlots:SLOTS).map(s=>{
         const passed=slotPassed(selDate,s);
         const tooSoon=!passed&&slotTooSoon(selDate,s);
         const room=slotHasRoom(selDate,s);
         const bookable=slotBookable(selDate,s);
         const minLeft=Math.min(...ITEMS.map(it=>dbLeft(selDate,s,it.id)));
         let capText;
-        if(passed)capText="已過時間";
+        if(!daySlots.includes(s))capText="本時段未開放";
+        else if(passed)capText="已過時間";
         else if(tooSoon)capText=CUTOFF_MSG;
         else if(!room)capText="三品項皆已額滿";
         else capText=`各品項尚有名額`;
@@ -473,6 +510,7 @@ function renderDateSlot(){
   });
   document.querySelectorAll(".slot:not(:disabled)").forEach(b=>b.onclick=()=>{
     selSlot=b.dataset.s; roster=[]; render();
+    document.getElementById("noticeModal").style.display="flex";
   });
 }
 
@@ -649,6 +687,7 @@ document.getElementById("btnNext").onclick=async()=>{
   else if(step===3)setStep(4);
   else if(step===4){ document.getElementById("btnNext").disabled=true; await submitBooking(); }
 };
+document.getElementById("noticeOk").onclick=()=>{ document.getElementById("noticeModal").style.display="none"; };
 (async function boot(){
   await loadSchedule();
   await loadBookings();
