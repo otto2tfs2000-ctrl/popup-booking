@@ -36,18 +36,29 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 .schedwrap{max-width:520px;margin:0 auto;padding:16px}
 .schedadd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px}
 .schedaddlabel{font-size:12.5px;color:var(--ink-soft);font-weight:700;margin-bottom:10px}
-.rangerow{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.rangerow input[type=date]{flex:1;padding:11px 10px;border:1.5px solid var(--line);border-radius:10px;
-  font-size:13.5px;font-family:inherit}
-.rangerow span{font-size:12.5px;color:var(--ink-soft)}
-.wdrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.wdchk{display:flex;align-items:center;gap:4px;font-size:12px;background:#F7F5EC;border-radius:8px;padding:6px 9px}
+.calwrap{margin-bottom:14px}
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calnavbtn{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:#fff;
+  font-size:17px;color:var(--mint-deep);font-family:inherit}
+.calmonth{font-family:'ZCOOL KuaiLe',sans-serif;font-size:15.5px;color:var(--ink)}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calhead{margin-bottom:4px}
+.calhead div{text-align:center;font-size:11px;color:var(--ink-soft)}
+.calcell{aspect-ratio:1;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12.5px;
+  color:var(--ink);font-family:inherit;display:flex;align-items:center;justify-content:center}
+.calcell.blank{border:none;background:none}
+.calcell.past{opacity:.28}
+.calcell.open{background:#DFF5EC;border-color:#BEE9D8;color:var(--ok);font-weight:700}
+.calcell.sel{background:var(--mint-deep);border-color:var(--mint-deep);color:#fff;font-weight:700}
+.callegend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);margin-top:9px;flex-wrap:wrap}
+.dot{width:11px;height:11px;border-radius:4px;display:inline-block}
+.dot.open{background:#DFF5EC;border:1.5px solid #BEE9D8}
+.dot.sel{background:var(--mint-deep)}
 .schedaddslots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .slotchk{display:flex;align-items:center;gap:5px;font-size:12.5px;background:#F7F5EC;border-radius:8px;padding:6px 10px}
 .schedadd button{width:100%;padding:11px 16px;border:none;border-radius:10px;background:var(--mint-deep);color:#fff;
   font-size:13.5px;font-weight:700;font-family:inherit}
 .schedadd button:disabled{background:#C7CBC4}
-.schedaddhint{font-size:11px;color:var(--ink-soft);margin-top:9px;line-height:1.6}
 .schedmonth{font-family:'ZCOOL KuaiLe',sans-serif;font-size:15px;color:var(--mint-deep);margin:16px 0 8px}
 .schedmonth:first-child{margin-top:0}
 .schedrow{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
@@ -60,6 +71,7 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
   font-size:13px;padding:0}
 .schedslots{display:flex;gap:7px;flex-wrap:wrap}
 .slotToggle{border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);padding:6px 12px;
+
   border-radius:9px;font-size:12px;font-weight:700;font-family:inherit}
 .slotToggle.on{background:var(--mint-deep);border-color:var(--mint-deep);color:#fff}
 
@@ -70,6 +82,8 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 .dtab b{display:block;font-family:'ZCOOL KuaiLe',sans-serif;font-size:15px}
 .dtab.on{background:#fff;color:var(--mint-deep);border-color:#fff}
 .dtab.on b{color:var(--mint-deep)}
+.dtab.istoday{border-color:var(--gold);border-width:2px}
+.dtab.istoday.on{box-shadow:0 0 0 2px var(--gold)}
 
 .searchrow{display:flex;gap:8px;margin-top:12px}
 .searchrow input{flex:1;padding:9px 12px;border-radius:10px;border:none;font-size:13.5px;font-family:inherit}
@@ -439,14 +453,20 @@ function bookingRow(b){
     </div>
   </div>`;
 }
+let todayScrolled=false;
 function renderDateTabs(){
   const el=document.getElementById("dateTabs");
   if(viewMode!=="bookings"){ el.innerHTML=""; return; }
-  el.innerHTML=OPEN_DATES.map(d=>`<button class="dtab ${!showAllDates&&d===selDate?'on':''}" data-d="${d}">
-    <b>${+d.split("/")[2]}</b>週${weekdayOf(d)}</button>`).join("");
+  const today=todayStr();
+  el.innerHTML=OPEN_DATES.map(d=>`<button class="dtab ${!showAllDates&&d===selDate?'on':''} ${d===today?'istoday':''}" data-d="${d}">
+    <b>${+d.split("/")[2]}</b>${d===today?'今天':'週'+weekdayOf(d)}</button>`).join("");
   el.querySelectorAll(".dtab").forEach(b=>b.onclick=()=>{
     selDate=b.dataset.d; showAllDates=false; syncToggleBtns(); render();
   });
+  if(!todayScrolled){
+    const target=el.querySelector(".dtab.on")||el.querySelector(".dtab.istoday");
+    if(target){ target.scrollIntoView({inline:"center",block:"nearest"}); todayScrolled=true; }
+  }
 }
 function syncToggleBtns(){
   document.getElementById("btnAllDates").className="togBtn"+(showAllDates?" on":"");
@@ -456,7 +476,39 @@ function syncToggleBtns(){
 
 /* ── 課程日期管理 ── */
 const SLOT_SHORT={"14:00-15:00":"14-15","15:00-16:00":"15-16","16:00-17:00":"16-17","17:00-18:00":"17-18","19:00-21:00":"19-21晚"};
-const WEEKDAYS=[{v:1,l:"一"},{v:2,l:"二"},{v:3,l:"三"},{v:4,l:"四"},{v:5,l:"五"},{v:6,l:"六"},{v:0,l:"日"}];
+let addCalMonth=null;       // "2026/08"（新增日期用的行事曆目前顯示哪個月）
+let pendingDates=new Set(); // 行事曆上點選中、還沒送出的日期
+function shiftMonth(mk,delta){
+  const [y,m]=mk.split("/").map(Number);
+  const d=new Date(y,m-1+delta,1);
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}`;
+}
+function renderAddCalendar(){
+  if(!addCalMonth){ const n=new Date(); addCalMonth=`${n.getFullYear()}/${pad(n.getMonth()+1)}`; }
+  const [y,m]=addCalMonth.split("/").map(Number);
+  const firstWd=new Date(y,m-1,1).getDay();
+  const daysInMonth=new Date(y,m,0).getDate();
+  const today=todayStr();
+  let cells="";
+  for(let i=0;i<firstWd;i++)cells+=`<div class="calcell blank"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=dstr(y,m,d);
+    const past=ds<today;
+    const open=effectiveSlots(ds).length>0;
+    const sel=pendingDates.has(ds);
+    cells+=`<button class="calcell ${past?'past':''} ${open?'open':''} ${sel?'sel':''}" data-d="${ds}" ${past?'disabled':''}>${d}</button>`;
+  }
+  return `<div class="calwrap">
+    <div class="calnav">
+      <button class="calnavbtn" id="calPrev">‹</button>
+      <div class="calmonth">${y} 年 ${m} 月</div>
+      <button class="calnavbtn" id="calNext">›</button>
+    </div>
+    <div class="calgrid calhead">${["日","一","二","三","四","五","六"].map(w=>`<div>${w}</div>`).join("")}</div>
+    <div class="calgrid">${cells}</div>
+    <div class="callegend"><span class="dot open"></span>已有開放時段　<span class="dot sel"></span>本次選取中</div>
+  </div>`;
+}
 function renderSchedule(){
   const today=todayStr();
   const all=Array.from(new Set(DEFAULT_DATES.concat(Object.keys(SCHEDULE_RAW)))).sort();
@@ -465,18 +517,12 @@ function renderSchedule(){
   const months=Object.keys(byMonth).sort();
   document.getElementById("view").innerHTML=`<div class="schedwrap">
     <div class="schedadd">
-      <div class="schedaddlabel">新增日期（可一次選一段範圍＋星期，批次新增）</div>
-      <div class="rangerow">
-        <input type="date" id="rangeStart"><span>至</span><input type="date" id="rangeEnd">
-      </div>
-      <div class="wdrow">
-        ${WEEKDAYS.map(w=>`<label class="wdchk"><input type="checkbox" class="wdChk" value="${w.v}" ${w.v>=1&&w.v<=5?'checked':''}>週${w.l}</label>`).join("")}
-      </div>
+      <div class="schedaddlabel">新增日期（直接點行事曆上的日期，可以跳著選不連續的天數）</div>
+      ${renderAddCalendar()}
       <div class="schedaddslots">
         ${SLOTS.map((s,i)=>`<label class="slotchk"><input type="checkbox" class="newSlotChk" value="${s}" ${i<4?'checked':''}> ${SLOT_SHORT[s]}</label>`).join("")}
       </div>
-      <button id="btnAddDate">＋ 新增這些日期</button>
-      <div class="schedaddhint">只選「開始日期」不選「結束日期」＝只新增那一天；範圍內只會加入你勾選的星期。</div>
+      <button id="btnAddDate">＋ 新增選取的 ${pendingDates.size} 天</button>
     </div>
     ${months.map(mk=>`<div class="schedmonth">${+mk.slice(5,7)} 月</div>
       ${byMonth[mk].map(d=>{
@@ -498,23 +544,20 @@ function renderSchedule(){
       }).join("")}
     `).join("")}
   </div>`;
+  document.getElementById("calPrev").onclick=()=>{ addCalMonth=shiftMonth(addCalMonth,-1); renderSchedule(); };
+  document.getElementById("calNext").onclick=()=>{ addCalMonth=shiftMonth(addCalMonth,1); renderSchedule(); };
+  document.querySelectorAll(".calcell:not(.blank):not(:disabled)").forEach(c=>c.onclick=()=>{
+    const d=c.dataset.d;
+    if(pendingDates.has(d))pendingDates.delete(d); else pendingDates.add(d);
+    renderSchedule();
+  });
   document.getElementById("btnAddDate").onclick=async()=>{
-    const startV=document.getElementById("rangeStart").value;   // "2026-09-01"
-    const endV=document.getElementById("rangeEnd").value||startV;
-    if(!startV){ alert("請至少選擇開始日期。"); return; }
-    if(endV<startV){ alert("結束日期不能早於開始日期。"); return; }
-    const wdChecked=Array.from(document.querySelectorAll(".wdChk:checked")).map(c=>+c.value);
+    const dates=Array.from(pendingDates).sort();
+    if(!dates.length){ alert("請先在行事曆上點選要新增的日期。"); return; }
     const slotsChecked=Array.from(document.querySelectorAll(".newSlotChk:checked")).map(c=>c.value);
     if(!slotsChecked.length){ alert("請至少勾選一個要開放的時段。"); return; }
-    const [sy,sm,sd]=startV.split("-").map(Number), [ey,em,ed]=endV.split("-").map(Number);
-    const cur=new Date(sy,sm-1,sd), end=new Date(ey,em-1,ed);
-    const dates=[];
-    while(cur<=end){
-      if(wdChecked.includes(cur.getDay())) dates.push(dstr(cur.getFullYear(),cur.getMonth()+1,cur.getDate()));
-      cur.setDate(cur.getDate()+1);
-    }
-    if(!dates.length){ alert("這個範圍內沒有符合星期篩選的日期。"); return; }
     if(!confirm(`即將把以下 ${dates.length} 天設定為開放：\n${dates.join("、")}\n\n確定要送出嗎？`))return;
+    pendingDates.clear();
     const btn=document.getElementById("btnAddDate");
     btn.disabled=true; btn.textContent="新增中…";
     await addDateRange(dates,slotsChecked);
