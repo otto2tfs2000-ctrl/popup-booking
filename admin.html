@@ -35,20 +35,29 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 
 .schedwrap{max-width:520px;margin:0 auto;padding:16px}
 .schedadd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px}
-.schedadd input[type=date]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;
-  font-size:14px;font-family:inherit;margin-bottom:10px}
+.schedaddlabel{font-size:12.5px;color:var(--ink-soft);font-weight:700;margin-bottom:10px}
+.rangerow{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.rangerow input[type=date]{flex:1;padding:11px 10px;border:1.5px solid var(--line);border-radius:10px;
+  font-size:13.5px;font-family:inherit}
+.rangerow span{font-size:12.5px;color:var(--ink-soft)}
+.wdrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.wdchk{display:flex;align-items:center;gap:4px;font-size:12px;background:#F7F5EC;border-radius:8px;padding:6px 9px}
 .schedaddslots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .slotchk{display:flex;align-items:center;gap:5px;font-size:12.5px;background:#F7F5EC;border-radius:8px;padding:6px 10px}
 .schedadd button{width:100%;padding:11px 16px;border:none;border-radius:10px;background:var(--mint-deep);color:#fff;
   font-size:13.5px;font-weight:700;font-family:inherit}
+.schedadd button:disabled{background:#C7CBC4}
+.schedaddhint{font-size:11px;color:var(--ink-soft);margin-top:9px;line-height:1.6}
 .schedmonth{font-family:'ZCOOL KuaiLe',sans-serif;font-size:15px;color:var(--mint-deep);margin:16px 0 8px}
 .schedmonth:first-child{margin-top:0}
 .schedrow{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
 .schedrow.past{opacity:.55}
-.schedrowhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
-.schedrow .d{font-weight:700}
+.schedrowhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}
+.schedrow .d{font-weight:700;flex:1}
 .schedrow .d small{color:var(--ink-soft);font-weight:400;margin-left:6px}
-.schedcount{font-size:11.5px;color:var(--ink-soft)}
+.schedcount{font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+.delBtn{flex:0 0 auto;border:none;background:#FBE7E2;color:var(--warn);width:28px;height:28px;border-radius:8px;
+  font-size:13px;padding:0}
 .schedslots{display:flex;gap:7px;flex-wrap:wrap}
 .slotToggle{border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);padding:6px 12px;
   border-radius:9px;font-size:12px;font-weight:700;font-family:inherit}
@@ -225,22 +234,59 @@ function recomputeOpenDates(){
   OPEN_DATES=Array.from(set).filter(d=>effectiveSlots(d).length>0).sort();
   if(!selDate||!OPEN_DATES.includes(selDate)) selDate = OPEN_DATES.includes(todayStr()) ? todayStr() : (OPEN_DATES[0]||"");
 }
-/* 把某天的開放時段整組寫回 Firebase；slotsArr 是要開放的時段字串陣列（[] 代表整天關閉） */
-async function setDateSlots(dateStr,slotsArr){
-  if(!FIREBASE_URL){ alert("尚未設定 FIREBASE_URL，無法寫入。"); return; }
+/* 低階寫入：只負責寫一天的資料，不重新載入畫面（給批次新增用，避免一次選很多天時重複刷新）。
+   回傳 true/false，失敗時把訊息放進 lastWriteError。 */
+let lastWriteError="";
+async function writeDateSlots(dateStr,slotsArr){
+  if(!FIREBASE_URL){ lastWriteError="尚未設定 FIREBASE_URL，無法寫入。"; return false; }
   try{
     const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule/"+toKey(dateStr)+".json",{
       method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(slotsArr)
     });
     if(!res.ok){
       const t=await res.text().catch(()=> "");
-      alert("寫入失敗（HTTP "+res.status+"）。\n很可能是 Firebase 規則沒有開放 popupSchedule 這個路徑的讀寫權限，請到 Realtime Database →「規則」分頁確認。\n"+t);
-      return;
+      lastWriteError="寫入失敗（HTTP "+res.status+"）。很可能是 Firebase 規則沒有開放 popupSchedule 路徑的讀寫權限。\n"+t;
+      return false;
     }
+    return true;
   }catch(e){
-    alert("更新失敗，請檢查網路連線後重試：\n"+e.message);
+    lastWriteError="更新失敗，請檢查網路連線：\n"+e.message;
+    return false;
+  }
+}
+/* 單一日期的修改（後台點時段開關用），寫完馬上重新整理畫面 */
+async function setDateSlots(dateStr,slotsArr){
+  const ok=await writeDateSlots(dateStr,slotsArr);
+  if(!ok){ alert(lastWriteError); return; }
+  await loadSchedule(); renderSchedule();
+}
+/* 一次新增多天（範圍＋星期篩選），全部寫完才重新整理一次畫面 */
+async function addDateRange(dates,slotsArr){
+  let failDates=[];
+  for(const d of dates){
+    const ok=await writeDateSlots(d,slotsArr);
+    if(!ok)failDates.push(d);
+  }
+  await loadSchedule(); renderSchedule();
+  if(failDates.length){
+    alert("有 "+failDates.length+" 天寫入失敗：\n"+failDates.join("、")+"\n\n"+lastWriteError);
+  }
+}
+/* 刪除一個日期。保底清單（DEFAULT_DATES）裡的日期沒辦法真的從清單消失（寫死在程式碼裡），
+   只能整天關閉；後台自己新增的日期則會真的從 Firebase 移除，預約頁面上會完全消失。 */
+async function deleteDateRow(dateStr){
+  const isDefault=DEFAULT_DATES.includes(dateStr);
+  if(isDefault){
+    if(!confirm(dateStr+" 是內建的活動日期，沒辦法整個從清單移除，但可以直接把它關閉（所有時段都不開放）。要這樣做嗎？"))return;
+    await setDateSlots(dateStr,[]);
     return;
   }
+  if(!confirm("確定要刪除 "+dateStr+" 這個日期嗎？刪除後這天會從預約頁面完全消失，這個動作沒辦法復原。"))return;
+  if(!FIREBASE_URL){ alert("尚未設定 FIREBASE_URL，無法刪除。"); return; }
+  try{
+    const res=await fetch(FIREBASE_URL.replace(/\/$/,"")+"/popupSchedule/"+toKey(dateStr)+".json",{method:"DELETE"});
+    if(!res.ok){ alert("刪除失敗（HTTP "+res.status+"）。"); return; }
+  }catch(e){ alert("刪除失敗，請檢查網路後重試：\n"+e.message); return; }
   await loadSchedule(); renderSchedule();
 }
 
@@ -410,6 +456,7 @@ function syncToggleBtns(){
 
 /* ── 課程日期管理 ── */
 const SLOT_SHORT={"14:00-15:00":"14-15","15:00-16:00":"15-16","16:00-17:00":"16-17","17:00-18:00":"17-18","19:00-21:00":"19-21晚"};
+const WEEKDAYS=[{v:1,l:"一"},{v:2,l:"二"},{v:3,l:"三"},{v:4,l:"四"},{v:5,l:"五"},{v:6,l:"六"},{v:0,l:"日"}];
 function renderSchedule(){
   const today=todayStr();
   const all=Array.from(new Set(DEFAULT_DATES.concat(Object.keys(SCHEDULE_RAW)))).sort();
@@ -418,11 +465,18 @@ function renderSchedule(){
   const months=Object.keys(byMonth).sort();
   document.getElementById("view").innerHTML=`<div class="schedwrap">
     <div class="schedadd">
-      <input type="date" id="newDateInput">
+      <div class="schedaddlabel">新增日期（可一次選一段範圍＋星期，批次新增）</div>
+      <div class="rangerow">
+        <input type="date" id="rangeStart"><span>至</span><input type="date" id="rangeEnd">
+      </div>
+      <div class="wdrow">
+        ${WEEKDAYS.map(w=>`<label class="wdchk"><input type="checkbox" class="wdChk" value="${w.v}" ${w.v>=1&&w.v<=5?'checked':''}>週${w.l}</label>`).join("")}
+      </div>
       <div class="schedaddslots">
         ${SLOTS.map((s,i)=>`<label class="slotchk"><input type="checkbox" class="newSlotChk" value="${s}" ${i<4?'checked':''}> ${SLOT_SHORT[s]}</label>`).join("")}
       </div>
-      <button id="btnAddDate">＋ 新增／更新日期</button>
+      <button id="btnAddDate">＋ 新增這些日期</button>
+      <div class="schedaddhint">只選「開始日期」不選「結束日期」＝只新增那一天；範圍內只會加入你勾選的星期。</div>
     </div>
     ${months.map(mk=>`<div class="schedmonth">${+mk.slice(5,7)} 月</div>
       ${byMonth[mk].map(d=>{
@@ -432,6 +486,7 @@ function renderSchedule(){
           <div class="schedrowhead">
             <span class="d">${d}（週${weekdayOf(d)}）${past?'<small>已過期</small>':''}</span>
             <span class="schedcount">${openSlots.length?openSlots.length+' 個時段開放':'整天關閉'}</span>
+            <button class="delBtn" data-del="${d}" title="刪除這個日期">🗑</button>
           </div>
           <div class="schedslots">
             ${SLOTS.map(s=>{
@@ -444,10 +499,25 @@ function renderSchedule(){
     `).join("")}
   </div>`;
   document.getElementById("btnAddDate").onclick=async()=>{
-    const v=document.getElementById("newDateInput").value; // "2026-08-30"
-    if(!v){ alert("請先選擇日期。"); return; }
-    const checked=Array.from(document.querySelectorAll(".newSlotChk:checked")).map(c=>c.value);
-    await setDateSlots(v.replace(/-/g,"/"), checked);
+    const startV=document.getElementById("rangeStart").value;   // "2026-09-01"
+    const endV=document.getElementById("rangeEnd").value||startV;
+    if(!startV){ alert("請至少選擇開始日期。"); return; }
+    if(endV<startV){ alert("結束日期不能早於開始日期。"); return; }
+    const wdChecked=Array.from(document.querySelectorAll(".wdChk:checked")).map(c=>+c.value);
+    const slotsChecked=Array.from(document.querySelectorAll(".newSlotChk:checked")).map(c=>c.value);
+    if(!slotsChecked.length){ alert("請至少勾選一個要開放的時段。"); return; }
+    const [sy,sm,sd]=startV.split("-").map(Number), [ey,em,ed]=endV.split("-").map(Number);
+    const cur=new Date(sy,sm-1,sd), end=new Date(ey,em-1,ed);
+    const dates=[];
+    while(cur<=end){
+      if(wdChecked.includes(cur.getDay())) dates.push(dstr(cur.getFullYear(),cur.getMonth()+1,cur.getDate()));
+      cur.setDate(cur.getDate()+1);
+    }
+    if(!dates.length){ alert("這個範圍內沒有符合星期篩選的日期。"); return; }
+    if(!confirm(`即將把以下 ${dates.length} 天設定為開放：\n${dates.join("、")}\n\n確定要送出嗎？`))return;
+    const btn=document.getElementById("btnAddDate");
+    btn.disabled=true; btn.textContent="新增中…";
+    await addDateRange(dates,slotsChecked);
   };
   document.querySelectorAll(".slotToggle").forEach(b=>b.onclick=()=>{
     const d=b.dataset.d, s=b.dataset.s;
@@ -455,6 +525,7 @@ function renderSchedule(){
     const next=cur.includes(s) ? cur.filter(x=>x!==s) : SLOTS.filter(x=>cur.includes(x)||x===s);
     setDateSlots(d,next);
   });
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteDateRow(b.dataset.del));
 }
 
 /* ── 事件綁定 ── */
