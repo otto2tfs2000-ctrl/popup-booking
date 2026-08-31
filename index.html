@@ -187,7 +187,7 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
   <span class="mascot">🐻</span>
   <div class="brand"><span class="paw">🐾</span>Otto2 台中旗艦店</div>
   <h1>創藝小玩家<br>隨選隨做工作坊</h1>
-  <div class="sub">活動日期｜8/17–8/21、8/24–8/28（週一至週五）<br>開放時段｜下午 2:00–6:00・晚上 7:00–9:00（實際時段依當日開放為準）</div>
+  <div class="sub" id="heroSub">開放時段｜下午 2:00–6:00・晚上 7:00–9:00（實際時段依當日開放為準）</div>
   <div class="tagrow">
     <span class="tag t-clay">黏土創作</span>
     <span class="tag t-cream">奶油膠DIY</span>
@@ -254,6 +254,10 @@ const DEFAULT_SLOTS = ["14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
    要調整成 4 小時或 8 小時，改這個數字就好。 */
 const CUTOFF_HOURS = 6;
 const CUTOFF_MSG = "已超過線上預約時間，如需預約請直接電洽或私訊老師";
+/* 把費用說明／預約時限文字併進頁首「開放時段」那個欄位，同一個框顯示，不再另外開一個提示框 */
+document.getElementById("heroSub").innerHTML +=
+  `<br>💰 費用說明｜無需線上付款，作品費用由現場依難易度／款式以點數折抵。`+
+  `<br>⏰ 預約時限｜開課前 ${CUTOFF_HOURS} 小時內請直接電洽或私訊老師，恕無法線上預約。`;
 
 /* 三個品項各自獨立算名額，互不排擠。
    colorCls 對應卡片左側色條與頁首標籤顏色，跟現場招牌配色一致。
@@ -495,7 +499,6 @@ function renderDateSlot(){
     </div></div>`;
   }
   document.getElementById("view").innerHTML=`<div class="wrap">
-    <div class="notice"><b>💰 費用說明</b>　無需線上付款，作品費用由現場依難易度／款式以點數折抵。<br><b>⏰ 預約時限</b>　開課前 ${CUTOFF_HOURS} 小時內請直接電洽或私訊老師，恕無法線上預約。</div>
     <div class="monthtabs">${monthTabs}</div>
     <div class="daterow">${datesInMonth.map(chip).join("")||'<div class="state">這個月還沒有開放的日期。</div>'}</div>
     ${slotHtml}
