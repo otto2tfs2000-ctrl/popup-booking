@@ -45,15 +45,19 @@ body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--cream);col
 .calhead{margin-bottom:4px}
 .calhead div{text-align:center;font-size:11px;color:var(--ink-soft)}
 .calcell{aspect-ratio:1;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12.5px;
-  color:var(--ink);font-family:inherit;display:flex;align-items:center;justify-content:center}
+  color:var(--ink);font-family:inherit;display:flex;align-items:center;justify-content:center;position:relative}
 .calcell.blank{border:none;background:none}
 .calcell.past{opacity:.28}
-.calcell.open{background:#DFF5EC;border-color:#BEE9D8;color:var(--ok);font-weight:700}
-.calcell.sel{background:var(--mint-deep);border-color:var(--mint-deep);color:#fff;font-weight:700}
+.calcell.open{border:2px solid var(--mint-deep);color:var(--mint-deep);font-weight:700}
+.calcell.open::after{content:"";position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--mint-deep)}
+.calcell.sel{background:var(--gold);border-color:var(--gold);color:#5A3D00;font-weight:900;
+  box-shadow:0 2px 6px rgba(200,138,0,.35)}
+.calcell.sel::after{display:none}
 .callegend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);margin-top:9px;flex-wrap:wrap}
-.dot{width:11px;height:11px;border-radius:4px;display:inline-block}
-.dot.open{background:#DFF5EC;border:1.5px solid #BEE9D8}
-.dot.sel{background:var(--mint-deep)}
+.dot{width:14px;height:14px;border-radius:4px;display:inline-block}
+.dot.open{background:#fff;border:2px solid var(--mint-deep);position:relative}
+.dot.sel{background:var(--gold);border:2px solid var(--gold)}
 .schedaddslots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .slotchk{display:flex;align-items:center;gap:5px;font-size:12.5px;background:#F7F5EC;border-radius:8px;padding:6px 10px}
 .schedadd button{width:100%;padding:11px 16px;border:none;border-radius:10px;background:var(--mint-deep);color:#fff;
