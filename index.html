@@ -495,7 +495,7 @@ function renderDateSlot(){
     </div></div>`;
   }
   document.getElementById("view").innerHTML=`<div class="wrap">
-    <div class="notice"><b>💰 費用說明</b>　無需線上付款，作品費用由現場依難易度／款式以星星折抵。<br><b>⏰ 預約時限</b>　開課前 ${CUTOFF_HOURS} 小時內請直接電洽或私訊老師，恕無法線上預約。</div>
+    <div class="notice"><b>💰 費用說明</b>　無需線上付款，作品費用由現場依難易度／款式以點數折抵。<br><b>⏰ 預約時限</b>　開課前 ${CUTOFF_HOURS} 小時內請直接電洽或私訊老師，恕無法線上預約。</div>
     <div class="monthtabs">${monthTabs}</div>
     <div class="daterow">${datesInMonth.map(chip).join("")||'<div class="state">這個月還沒有開放的日期。</div>'}</div>
     ${slotHtml}
@@ -674,7 +674,7 @@ function renderDone(id,rec){
     <p><b>${rec.date}（週${weekdayOf(rec.date)}）　${rec.slot}</b><br>編號：${id}</p>
     <div class="items">大人 ${rec.adults} 位・兒童 ${rec.kids} 位<br>
       ${rec.items.map(it=>`${it.person}　${it.name}`).join("<br>")}</div>
-    <p style="margin-top:14px">請提前 5-10 分鐘到櫃檯報到，作品費用現場依難易度／款式以星星折抵。</p>
+    <p style="margin-top:14px">請提前 5-10 分鐘到櫃檯報到，作品費用現場依難易度／款式以點數折抵。</p>
   </div>`;
 }
 
